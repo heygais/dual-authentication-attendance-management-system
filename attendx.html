@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AttendX — Hybrid Attendance System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0e1a; --surface:#111827; --surface2:#1a2235; --surface3:#222f45;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+  --accent:#00e5a0; --accent2:#0066ff; --accent3:#7c3aed;
+  --text:#f0f4ff; --muted:#8896b3; --muted2:#5a6a85;
+  --danger:#ff4d6d; --warn:#ffb340; --info:#38bdf8;
+  --sidebar:240px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Syne',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+button{cursor:pointer;}
+a{text-decoration:none;color:inherit;}
+input,select,textarea{font-family:'Syne',sans-serif;}
+
+.grid-bg::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.orb{position:fixed;border-radius:50%;filter:blur(130px);pointer-events:none;z-index:0;}
+.orb-1{width:600px;height:600px;background:rgba(0,229,160,0.06);top:-200px;left:-100px;}
+.orb-2{width:500px;height:500px;background:rgba(0,102,255,0.05);bottom:-200px;right:-100px;}
+
+.page{display:none;min-height:100vh;}
+.page.active{display:flex;}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes scanMove{0%{top:0}100%{top:100%}}
+
+/* ── LOGO ── */
+.logo{display:flex;align-items:center;gap:8px;font-size:1rem;font-weight:800;letter-spacing:-.5px;}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s ease infinite;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 1rem;position:fixed;height:100vh;z-index:50;top:0;left:0;}
+.sidebar .logo{padding:.5rem .75rem;margin-bottom:2rem;}
+.nav-label{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);font-family:'DM Mono',monospace;padding:0 .75rem;margin-bottom:.4rem;margin-top:1.2rem;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:.65rem .75rem;border-radius:8px;font-size:.85rem;font-weight:500;color:var(--muted);transition:all .2s;margin-bottom:2px;border:1px solid transparent;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:rgba(0,229,160,.1);color:var(--accent);border-color:rgba(0,229,160,.15);}
+.nav-icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0;}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding-top:1rem;}
+.user-card{display:flex;align-items:center;gap:10px;padding:.65rem .75rem;border-radius:8px;background:var(--surface2);}
+.user-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;}
+.avatar-student{background:rgba(0,229,160,.15);color:var(--accent);}
+.avatar-admin{background:rgba(0,102,255,.2);color:#6699ff;}
+.avatar-lecturer{background:rgba(124,58,237,.2);color:#a78bfa;}
+.user-name{font-size:.8rem;font-weight:600;}
+.user-role{font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:.6rem .75rem;border-radius:8px;font-size:.82rem;color:var(--muted);margin-top:6px;transition:all .2s;background:none;border:none;font-family:'Syne',sans-serif;width:100%;text-align:left;}
+.logout-btn:hover{color:var(--danger);background:rgba(255,77,109,.08);}
+
+/* ── LAYOUT ── */
+.main-content{margin-left:var(--sidebar);flex:1;padding:2rem 2.5rem;position:relative;z-index:1;min-height:100vh;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;}
+.page-title{font-size:1.4rem;font-weight:800;letter-spacing:-.5px;}
+.page-sub{font-size:.78rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:.65rem;font-family:'DM Mono',monospace;padding:4px 10px;border-radius:20px;}
+.badge-live{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.2);color:var(--accent);}
+.badge-live .live-dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:pulse 1.5s ease infinite;}
+.badge-clock{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:6px 14px;}
+.badge-info{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:var(--info);}
+.badge-warn{background:rgba(255,179,64,.1);border:1px solid rgba(255,179,64,.2);color:var(--warn);}
+.badge-danger{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);color:var(--danger);}
+.badge-success{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.2);color:var(--accent);}
+.badge-module{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:.6rem;letter-spacing:1px;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;animation:fadeUp .5s ease both;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.5rem;}
+.card-title{font-size:.9rem;font-weight:700;}
+.card-sub{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+
+/* ── STAT GRID ── */
+.stat-grid{display:grid;gap:1rem;margin-bottom:1.5rem;}
+.stat-grid-4{grid-template-columns:repeat(4,1fr);}
+.stat-grid-3{grid-template-columns:repeat(3,1fr);}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;animation:fadeUp .5s ease both;}
+.stat-label{font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;}
+.stat-num{font-size:2rem;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:4px;}
+.stat-change{font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.c-green{color:var(--accent);}
+.c-red{color:var(--danger);}
+.c-blue{color:#6699ff;}
+.c-warn{color:var(--warn);}
+
+/* ── LAYOUT GRIDS ── */
+.grid-2{display:grid;grid-template-columns:1fr 340px;gap:1.5rem;}
+.grid-2-eq{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.mb{margin-bottom:1.5rem;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#0a0e1a;padding:.65rem 1.2rem;font-size:.82rem;}
+.btn-primary:hover{background:#00ffb3;transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,229,160,.25);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:.6rem 1rem;font-size:.78rem;}
+.btn-secondary:hover{border-color:var(--border2);background:var(--surface3);}
+.btn-danger{background:rgba(255,77,109,.15);color:var(--danger);border:1px solid rgba(255,77,109,.2);padding:.55rem .9rem;font-size:.75rem;}
+.btn-danger:hover{background:rgba(255,77,109,.25);}
+.btn-sm{padding:.4rem .8rem;font-size:.72rem;}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted);padding:.5rem .9rem;font-size:.75rem;}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── FORMS ── */
+.field{margin-bottom:1rem;}
+.field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:6px;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;}
+.input-wrap{position:relative;}
+.input-wrap input,.field input,.field select,.field textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;font-size:.88rem;color:var(--text);font-family:'Syne',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;}
+.input-wrap input{padding-left:2.6rem;}
+.input-icon{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);font-size:.9rem;pointer-events:none;}
+.field input:focus,.field select:focus,.field textarea:focus,.input-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,.1);}
+.field input::placeholder,.input-wrap input::placeholder{color:var(--muted);font-size:.82rem;}
+.field select option{background:var(--surface);}
+.field textarea{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:1px solid var(--border);}
+th{padding:.75rem 1.5rem;text-align:left;font-size:.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-family:'DM Mono',monospace;font-weight:500;white-space:nowrap;}
+td{padding:.85rem 1.5rem;font-size:.82rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--surface2);}
+
+/* ── ALERTS ── */
+.alert{border-radius:10px;padding:.85rem 1.25rem;display:flex;align-items:flex-start;gap:10px;margin-bottom:1.5rem;font-size:.82rem;animation:fadeUp .4s ease;}
+.alert-warn{background:rgba(255,179,64,.08);border:1px solid rgba(255,179,64,.2);color:var(--warn);}
+.alert-danger{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.2);color:var(--danger);}
+.alert-success{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);color:var(--accent);}
+.alert-info{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);color:var(--info);}
+
+/* ── PROGRESS ── */
+.progress-track{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+.fill-good{background:linear-gradient(90deg,var(--accent),#00ffb3);}
+.fill-warn{background:linear-gradient(90deg,var(--warn),#ffcc70);}
+.fill-bad{background:linear-gradient(90deg,var(--danger),#ff7090);}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:1.5rem;}
+.tab{padding:.55rem 1.1rem;border-radius:7px;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;border:none;background:none;font-family:'Syne',sans-serif;}
+.tab.active{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:2rem;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:fadeUp .3s ease;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.modal-title{font-size:1.1rem;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px;}
+.modal-close:hover{color:var(--text);}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border);}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:.85rem 1.25rem;font-size:.82rem;display:flex;align-items:center;gap:10px;min-width:280px;animation:slideIn .3s ease;box-shadow:0 10px 40px rgba(0,0,0,.5);}
+.toast-success{border-left:3px solid var(--accent);}
+.toast-error{border-left:3px solid var(--danger);}
+.toast-info{border-left:3px solid var(--info);}
+.toast-warn{border-left:3px solid var(--warn);}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:10px;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.search-input{flex:1;min-width:180px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;font-size:.82rem;color:var(--text);font-family:'Syne',sans-serif;outline:none;transition:border-color .2s;}
+.search-input:focus{border-color:var(--accent);}
+.search-input::placeholder{color:var(--muted);}
+.filter-select{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;font-size:.82rem;color:var(--text);font-family:'Syne',sans-serif;outline:none;}
+.filter-select option{background:var(--surface);}
+
+/* ── CHART ── */
+.chart-bar-wrap{display:flex;align-items:flex-end;gap:8px;height:120px;padding:0 1.5rem 1rem;}
+.chart-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;transition:height .8s ease;min-height:4px;background:linear-gradient(180deg,var(--accent),rgba(0,229,160,.4));}
+.chart-bar.warn{background:linear-gradient(180deg,var(--warn),rgba(255,179,64,.4));}
+.chart-bar.bad{background:linear-gradient(180deg,var(--danger),rgba(255,77,109,.4));}
+.chart-label{font-size:.6rem;font-family:'DM Mono',monospace;color:var(--muted);text-align:center;}
+.chart-val{font-size:.65rem;font-family:'DM Mono',monospace;color:var(--text);font-weight:600;}
+
+/* ── PCT BADGE ── */
+.pct{display:inline-block;font-size:.7rem;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:5px;font-weight:600;}
+.pct-good{background:rgba(0,229,160,.12);color:var(--accent);}
+.pct-warn{background:rgba(255,179,64,.12);color:var(--warn);}
+.pct-bad{background:rgba(255,77,109,.12);color:var(--danger);}
+
+/* ── METHOD TAGS (DUAL VERIFICATION) ── */
+.method-tag{font-size:.65rem;font-family:'DM Mono',monospace;padding:2px 8px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;}
+.m-rfid{background:rgba(0,102,255,.15);color:#6699ff;}
+.m-fp{background:rgba(0,229,160,.12);color:var(--accent);}
+.m-qr{background:rgba(124,58,237,.15);color:#a78bfa;}
+.m-abs{background:rgba(255,77,109,.12);color:var(--danger);}
+.m-manual{background:rgba(255,179,64,.12);color:var(--warn);}
+.m-pending{background:rgba(255,179,64,.1);color:var(--warn);}
+
+/* Dual verification status box */
+.dual-verify{display:flex;gap:4px;align-items:center;flex-wrap:wrap;}
+
+/* ── LIVE FEED ── */
+.live-item{display:flex;align-items:center;gap:10px;padding:.85rem 1.5rem;border-bottom:1px solid var(--border);animation:slideIn .3s ease forwards;}
+.live-item:last-child{border-bottom:none;}
+.live-info{flex:1;}
+.live-name{font-size:.82rem;font-weight:600;}
+.live-meta{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px;}
+.live-time{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;min-width:55px;text-align:right;}
+
+/* ── STATUS DOT ── */
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* ── CALENDAR ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:1rem 1.5rem 1.5rem;}
+.cal-day-label{text-align:center;font-size:.62rem;font-family:'DM Mono',monospace;color:var(--muted);padding-bottom:4px;}
+.cal-day{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-family:'DM Mono',monospace;transition:all .15s;}
+.cal-day.present{background:rgba(0,229,160,.2);color:var(--accent);font-weight:600;}
+.cal-day.absent{background:rgba(255,77,109,.15);color:var(--danger);}
+.cal-day.incomplete{background:rgba(255,179,64,.15);color:var(--warn);}
+.cal-day.empty{color:var(--surface2);}
+.cal-day.today{border:1px solid var(--accent);}
+.cal-day:hover{transform:scale(1.15);}
+.cal-legend{display:flex;gap:1rem;padding:0 1.5rem 1rem;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.leg-dot{width:8px;height:8px;border-radius:2px;}
+
+/* ── NOTIF ── */
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:1rem 1.5rem;border-bottom:1px solid var(--border);}
+.notif-item:last-child{border-bottom:none;}
+.notif-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+
+/* ── QR ── */
+.qr-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1.5rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.qr-code{width:80px;height:80px;background:repeating-linear-gradient(0deg,var(--border) 0,var(--border) 2px,transparent 2px,transparent 10px),repeating-linear-gradient(90deg,var(--border) 0,var(--border) 2px,transparent 2px,transparent 10px);border-radius:4px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  :root{--sidebar:0px;}
+  .sidebar{transform:translateX(-100%);}
+  .main-content{margin-left:0;padding:1.5rem;}
+  .stat-grid-4{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .stat-grid-4{grid-template-columns:1fr 1fr;}
+  .stat-grid-3{grid-template-columns:1fr;}
+  .tabs{flex-wrap:wrap;}
+}
+</style>
+</head>
+<body class="grid-bg">
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══════════════════════════════════════
+     LOGIN PAGE — Module 3 · US4
+══════════════════════════════════════ -->
+<div class="page active" id="page-login" style="align-items:stretch;">
+  <!-- Left branding panel -->
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:3rem;border-right:1px solid var(--border);position:relative;z-index:1;">
+    <div class="logo"><div class="logo-dot"></div>AttendX</div>
+    <div style="animation:fadeUp .8s ease;">
+      <div class="badge badge-live" style="margin-bottom:2rem;"><div class="live-dot"></div>Live System Active</div>
+      <h1 style="font-size:3.2rem;font-weight:800;letter-spacing:-2px;line-height:1.08;margin-bottom:1.2rem;">Smart<br>Attendance<br><span style="color:var(--accent)">Tracking.</span></h1>
+      <p style="font-size:.9rem;color:var(--muted);line-height:1.8;max-width:360px;margin-bottom:2rem;">RFID + Fingerprint <strong style="color:var(--text)">dual verification</strong> required. Both must be scanned to mark attendance. Automated. Accurate. Zero paper.</p>
+      <!-- Dual verify explainer -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:2rem;display:flex;align-items:center;gap:16px;">
+        <span class="method-tag m-rfid" style="font-size:.72rem;padding:4px 12px;">💳 RFID</span>
+        <div style="font-size:1rem;color:var(--muted);">+</div>
+        <span class="method-tag m-fp" style="font-size:.72rem;padding:4px 12px;">👆 Fingerprint</span>
+        <div style="font-size:1rem;color:var(--muted);">=</div>
+        <span class="badge badge-success" style="font-size:.72rem;">✓ Present</span>
+      </div>
+      <div style="display:flex;gap:2rem;margin-bottom:2rem;">
+        <div><div style="font-size:1.6rem;font-weight:800;letter-spacing:-1px;">248</div><div style="font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;">Students</div></div>
+        <div><div style="font-size:1.6rem;font-weight:800;letter-spacing:-1px;">6</div><div style="font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;">Modules</div></div>
+        <div><div style="font-size:1.6rem;font-weight:800;letter-spacing:-1px;color:var(--accent);">99%</div><div style="font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;">Accuracy</div></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="badge badge-module">M1 Hardware Auth</span>
+        <span class="badge badge-module">M2 User Mgmt</span>
+        <span class="badge badge-module">M3 Login & Access</span>
+        <span class="badge badge-module">M4 Attendance Records</span>
+        <span class="badge badge-module">M5 Reports & Export</span>
+        <span class="badge badge-module">M6 Class Mgmt</span>
+      </div>
+    </div>
+    <div style="font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;">© 2025 AttendX · FYP Project · v1.0</div>
+  </div>
+
+  <!-- Right login panel -->
+  <div style="width:460px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;padding:3rem 3.5rem;position:relative;z-index:1;">
+    <div style="margin-bottom:2rem;animation:fadeUp .6s ease .1s both;">
+      <div style="font-size:1.8rem;font-weight:800;letter-spacing:-1px;margin-bottom:6px;">Welcome back</div>
+      <div style="font-size:.82rem;color:var(--muted);font-family:'DM Mono',monospace;">Sign in to continue · US4</div>
+    </div>
+
+    <!-- Role toggle -->
+    <div style="display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:1.5rem;animation:fadeUp .6s ease .2s both;" id="roleToggle">
+      <button class="tab active" style="flex:1;border-radius:7px;" onclick="setRole('student',this)">🎓 Student</button>
+      <button class="tab" style="flex:1;border-radius:7px;" onclick="setRole('lecturer',this)">👨‍🏫 Lecturer</button>
+      <button class="tab" style="flex:1;border-radius:7px;" onclick="setRole('admin',this)">🔐 Admin</button>
+    </div>
+
+    <!-- Demo credentials -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;margin-bottom:1.25rem;animation:fadeUp .6s ease .25s both;">
+      <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:8px;">Demo credentials — click to fill</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;">username</span>
+        <span style="font-size:.78rem;font-family:'DM Mono',monospace;color:var(--accent);background:rgba(0,229,160,.08);padding:2px 8px;border-radius:4px;cursor:pointer;" id="demoUser" onclick="fillDemo('user')">2021001234</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;">password</span>
+        <span style="font-size:.78rem;font-family:'DM Mono',monospace;color:var(--accent);background:rgba(0,229,160,.08);padding:2px 8px;border-radius:4px;cursor:pointer;" onclick="fillDemo('pass')">password123</span>
+      </div>
+    </div>
+
+    <div class="alert alert-danger" id="loginError" style="display:none;">Invalid username or password.</div>
+
+    <div style="animation:fadeUp .6s ease .3s both;">
+      <div class="field">
+        <label>Username / Student ID</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input type="text" id="loginUser" placeholder="Enter your ID or username">
+        </div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="loginPass" placeholder="Enter your password">
+        </div>
+      </div>
+      <div style="text-align:right;margin-bottom:1rem;">
+        <span style="font-size:.75rem;color:var(--accent);font-family:'DM Mono',monospace;cursor:pointer;" onclick="showForgotPassword()">Forgot password? (US6)</span>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:.9rem;font-size:.95rem;" id="loginBtn" onclick="handleLogin()">Sign In</button>
+      <div style="text-align:center;margin-top:1rem;font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;">Having trouble? Contact your administrator</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     APP LAYOUT (after login)
+══════════════════════════════════════ -->
+<div id="appLayout" style="display:none;">
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="logo" style="padding:.5rem .75rem;margin-bottom:2rem;"><div class="logo-dot"></div>AttendX</div>
+  <div id="sidebarNav"></div>
+  <div class="sidebar-bottom">
+    <div class="user-card" id="sidebarUser"></div>
+    <button class="logout-btn" onclick="logout()">🚪 Sign Out (US7)</button>
+  </div>
+</div>
+
+<!-- CONTENT AREA -->
+<div class="main-content" id="mainContent">
+
+  <!-- ══ STUDENT DASHBOARD ══ -->
+  <div id="view-student-dashboard" class="view" style="display:none;">
+    <div class="topbar">
+      <div><div class="page-title" id="greetStudent">Good morning 👋</div><div class="page-sub">Your attendance overview · US5</div></div>
+      <div class="topbar-right"><div class="badge badge-clock" id="clock1">--:--:--</div></div>
+    </div>
+    <div class="alert alert-warn" id="studentWarnBanner" style="display:none;">⚠️ <strong style="margin:0 4px">Warning:</strong> <span id="studentWarnText"></span></div>
+    <!-- Dual verify reminder -->
+    <div class="alert alert-info" style="margin-bottom:1.5rem;">
+      ℹ️ <strong style="margin:0 4px">Reminder:</strong> Both <span class="method-tag m-rfid" style="margin:0 4px;">💳 RFID</span> and <span class="method-tag m-fp" style="margin:0 4px;">👆 Fingerprint</span> scans are required at the classroom door to mark attendance.
+    </div>
+    <div class="stat-grid stat-grid-4">
+      <div class="stat-card" style="animation-delay:0s"><div class="stat-label">Total Classes <span>📅</span></div><div class="stat-num" id="sTotalClasses">72</div><div class="stat-change">Across 4 subjects</div></div>
+      <div class="stat-card" style="animation-delay:.08s"><div class="stat-label">Attended <span>✅</span></div><div class="stat-num c-green" id="sAttended">61</div><div class="stat-change">Both scans verified</div></div>
+      <div class="stat-card" style="animation-delay:.16s"><div class="stat-label">Incomplete <span>⚠️</span></div><div class="stat-num c-warn" id="sIncomplete">3</div><div class="stat-change">Only 1 scan done</div></div>
+      <div class="stat-card" style="animation-delay:.24s"><div class="stat-label">Overall Rate <span>📈</span></div><div class="stat-num c-blue" id="sRate">84.7%</div><div class="stat-change">Min 80% required</div></div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="card mb">
+          <div class="card-header"><div><div class="card-title">Attendance by Subject</div><div class="card-sub">US5 · Semester 1 2025/2026</div></div></div>
+          <div id="subjectRows"></div>
+        </div>
+        <div class="card" style="animation-delay:.4s">
+          <div class="card-header"><div><div class="card-title">Recent Scan History</div><div class="card-sub">RFID + Fingerprint dual verification records</div></div></div>
+          <div id="studentRecentScans"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card mb" style="animation-delay:.35s">
+          <div class="card-header"><div><div class="card-title">Attendance Calendar</div><div class="card-sub">May 2025</div></div></div>
+          <div class="cal-grid" id="studentCal"></div>
+          <div class="cal-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:rgba(0,229,160,.5)"></div>Present (Both)</div>
+            <div class="leg-item"><div class="leg-dot" style="background:rgba(255,179,64,.5)"></div>Incomplete</div>
+            <div class="leg-item"><div class="leg-dot" style="background:rgba(255,77,109,.5)"></div>Absent</div>
+          </div>
+        </div>
+        <div class="card" style="animation-delay:.45s">
+          <div class="card-header"><div><div class="card-title">Attendance Chart</div><div class="card-sub">Enhancement 2 · Per subject %</div></div></div>
+          <div class="chart-bar-wrap" id="studentChart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STUDENT PROFILE ══ -->
+  <div id="view-student-profile" class="view" style="display:none;">
+    <div class="topbar"><div><div class="page-title">My Profile</div><div class="page-sub">Module 2 · US10 · RFID & Fingerprint registration status</div></div></div>
+    <div class="grid-2-eq">
+      <div class="card" style="animation-delay:0s">
+        <div class="card-header"><div class="card-title">Personal Information</div></div>
+        <div style="padding:1.5rem;display:flex;flex-direction:column;gap:1rem;">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.5rem;">
+            <div class="user-avatar avatar-student" style="width:60px;height:60px;font-size:1.2rem;">AR</div>
+            <div><div style="font-size:1.1rem;font-weight:700;">Ahmad Rizal</div><div style="font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;">2021001234</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.75rem;">
+            <div style="display:flex;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border);"><span style="font-size:.75rem;color:var(--muted);">Email</span><span style="font-size:.82rem;">ahmad.rizal@university.edu.my</span></div>
+            <div style="display:flex;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border);"><span style="font-size:.75rem;color:var(--muted);">Programme</span><span style="font-size:.82rem;">Bachelor of CS</span></div>
+            <div style="display:flex;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border);"><span style="font-size:.75rem;color:var(--muted);">Year / Semester</span><span style="font-size:.82rem;">Year 3 / Sem 1</span></div>
+            <div style="display:flex;justify-content:space-between;padding:.6rem 0;"><span style="font-size:.75rem;color:var(--muted);">Enrolled Classes</span><span style="font-size:.82rem;">4 subjects</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="animation-delay:.1s">
+        <div class="card-header"><div class="card-title">Hardware Registration Status</div><div class="card-sub">Module 1 & 2 · Both required</div></div>
+        <div style="padding:1.5rem;display:flex;flex-direction:column;gap:1rem;">
+          <!-- RFID -->
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.5rem;">💳</span>
+            <div style="flex:1"><div style="font-size:.85rem;font-weight:600;">RFID Card</div><div style="font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">UID: A3F2C1B0 · Step 1 of 2</div></div>
+            <span class="badge badge-success">Registered</span>
+          </div>
+          <!-- Fingerprint -->
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.5rem;">👆</span>
+            <div style="flex:1"><div style="font-size:.85rem;font-weight:600;">Fingerprint</div><div style="font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">Sensor ID: 001 · Step 2 of 2</div></div>
+            <span class="badge badge-success">Enrolled</span>
+          </div>
+          <!-- Dual verify note -->
+          <div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.15);border-radius:10px;padding:1rem;">
+            <div style="font-size:.78rem;font-weight:600;color:var(--accent);margin-bottom:4px;">✓ Dual Verification Active</div>
+            <div style="font-size:.72rem;color:var(--muted);line-height:1.6;">You must scan both your RFID card and fingerprint at the door scanner to be marked present. Scanning only one will result in an <strong style="color:var(--warn)">Incomplete</strong> status.</div>
+          </div>
+          <!-- QR Backup — Enhancement 5 -->
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.5rem;">📱</span>
+            <div style="flex:1"><div style="font-size:.85rem;font-weight:600;">QR Code Backup</div><div style="font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">Enhancement 5 — hardware failure fallback</div></div>
+            <span class="badge badge-info">Active</span>
+          </div>
+          <div class="qr-box">
+            <div style="font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:.5rem;">Your QR Backup Code</div>
+            <div class="qr-code"></div>
+            <div style="font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:.5rem;">2021001234 · Valid this session only · Show to lecturer</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ADMIN DASHBOARD ══ -->
+  <div id="view-admin-dashboard" class="view" style="display:none;">
+    <div class="topbar">
+      <div><div class="page-title">Admin Dashboard</div><div class="page-sub">All modules · Live system · Dual verification</div></div>
+      <div class="topbar-right"><div class="badge badge-live"><div class="live-dot"></div>Live</div><div class="badge badge-clock" id="clock2">--:--:--</div></div>
+    </div>
+    <div class="stat-grid stat-grid-4">
+      <div class="stat-card" style="animation-delay:0s"><div class="stat-label">Total Students <span>👥</span></div><div class="stat-num">248</div><div class="stat-change">4 classes enrolled</div></div>
+      <div class="stat-card" style="animation-delay:.08s"><div class="stat-label">Fully Verified Today <span>✅</span></div><div class="stat-num c-green" id="adminCheckins">61</div><div class="stat-change">Both RFID + Finger</div></div>
+      <div class="stat-card" style="animation-delay:.16s"><div class="stat-label">Incomplete Scans <span>⚠️</span></div><div class="stat-num c-warn" id="adminIncomplete">7</div><div class="stat-change">Only 1 of 2 scans done</div></div>
+      <div class="stat-card" style="animation-delay:.24s"><div class="stat-label">Below 80% Rate <span>🚨</span></div><div class="stat-num c-red">14</div><div class="stat-change">Needs attention</div></div>
+    </div>
+    <div class="card mb" style="animation-delay:.3s">
+      <div class="card-header"><div><div class="card-title">Attendance Overview Chart</div><div class="card-sub">Enhancement 2 · Per class attendance % this week</div></div></div>
+      <div class="chart-bar-wrap" id="adminChart" style="height:140px;"></div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="card mb" style="animation-delay:.35s">
+          <div class="card-header"><div><div class="card-title">Student Overview</div><div class="card-sub">Quick view · RFID + Fingerprint status</div></div><button class="btn btn-primary btn-sm" onclick="navigate('admin-students')">View All</button></div>
+          <div class="filter-bar"><input class="search-input" placeholder="🔍 Search students..." id="adminSearch" oninput="filterAdminStudents()"><select class="filter-select" id="adminFilter" onchange="filterAdminStudents()"><option value="all">All Classes</option><option value="CS301">CS301</option><option value="CS201">CS201</option><option value="CS401">CS401</option></select></div>
+          <div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>RFID ✓</th><th>Finger ✓</th><th>Rate</th></tr></thead><tbody id="adminStudentTable"></tbody></table></div>
+        </div>
+      </div>
+      <div>
+        <div class="card mb" style="animation-delay:.4s">
+          <div class="card-header"><div><div class="card-title">Live Check-ins</div><div class="card-sub">Module 1 · Real-time dual verification feed</div></div><div class="badge badge-live"><div class="live-dot"></div>Auto</div></div>
+          <div style="max-height:280px;overflow-y:auto;" id="adminLiveFeed"></div>
+        </div>
+        <div class="card" style="animation-delay:.45s">
+          <div class="card-header"><div><div class="card-title">Email Notifications</div><div class="card-sub">Enhancement 1 · Absent alerts sent</div></div><button class="btn btn-secondary btn-sm" onclick="showToast('Sending absent notifications...','info')">Send Now</button></div>
+          <div id="notifList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ADMIN STUDENTS — Module 2 ══ -->
+  <div id="view-admin-students" class="view" style="display:none;">
+    <div class="topbar"><div><div class="page-title">Student Management</div><div class="page-sub">Module 2 · US10, US11, US12, US13 · Register RFID & Fingerprint</div></div><button class="btn btn-primary" onclick="openModal('addStudentModal')">+ Register Student</button></div>
+    <div class="card">
+      <div class="filter-bar">
+        <input class="search-input" placeholder="🔍 Search by name or ID..." id="stuSearch" oninput="renderStudentMgmt()">
+        <select class="filter-select" id="stuClassFilter" onchange="renderStudentMgmt()"><option value="all">All Classes</option><option value="CS301">CS301</option><option value="CS201">CS201</option><option value="CS401">CS401</option><option value="CS102">CS102</option></select>
+        <select class="filter-select" id="stuStatusFilter" onchange="renderStudentMgmt()"><option value="all">All Status</option><option value="good">≥80% (OK)</option><option value="bad">&lt;80% (At Risk)</option></select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Student</th><th>Class</th><th>RFID Card</th><th>Fingerprint ID</th><th>Rate</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="stuMgmtTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ADMIN CLASSES — Module 6 · US15 ══ -->
+  <div id="view-admin-classes" class="view" style="display:none;">
+    <div class="topbar"><div><div class="page-title">Class Management</div><div class="page-sub">Module 6 · US15 · Add, edit, delete, link students & lecturers</div></div><button class="btn btn-primary" onclick="openModal('addClassModal')">+ Add Class</button></div>
+    <div class="grid-2-eq" style="margin-bottom:1.5rem;">
+      <div class="card">
+        <div class="card-header"><div class="card-title">All Classes / Subjects</div></div>
+        <div id="classMgmtList"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Enroll Students</div><div class="card-sub">US15 · Link students to a class</div></div></div>
+        <div style="padding:1.5rem;">
+          <div class="field"><label>Select Class</label><select id="enrollClassSelect"><option value="">-- Choose Class --</option></select></div>
+          <div class="field"><label>Select Student</label><select id="enrollStudentSelect"><option value="">-- Choose Student --</option></select></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="enrollStudent()">Link Student to Class</button>
+          <div style="margin-top:1rem;" id="enrolledList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ATTENDANCE RECORDS — Module 4 · US5, US8 ══ -->
+  <div id="view-admin-attendance" class="view" style="display:none;">
+    <div class="topbar"><div><div class="page-title">Attendance Records</div><div class="page-sub">Module 4 · US5, US8 · Dual verification status per student</div></div></div>
+    <div class="tabs" style="margin-bottom:1.5rem;" id="attTabsRow">
+      <button class="tab active" onclick="switchTab('attTabsRow','attTab-class','attTab',this)">By Class</button>
+      <button class="tab" onclick="switchTab('attTabsRow','attTab-student','attTab',this)">By Student</button>
+      <button class="tab" onclick="switchTab('attTabsRow','attTab-date','attTab',this)">By Date</button>
+    </div>
+    <div class="tab-panel active attTab" id="attTab-class">
+      <div class="card">
+        <div class="filter-bar">
+          <select class="filter-select" id="attClassFilter"><option value="all">All Classes</option><option value="CS301">CS301</option><option value="CS201">CS201</option><option value="CS401">CS401</option></select>
+          <input type="date" class="filter-select" id="attDateFilter" value="2025-05-02">
+          <button class="btn btn-secondary btn-sm" onclick="renderAttendanceTable()">Apply</button>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Student</th><th>Student ID</th><th>Class</th><th>💳 RFID</th><th>👆 Fingerprint</th><th>Time</th><th>Status</th><th>Override</th></tr></thead><tbody id="attendanceTable"></tbody></table></div>
+      </div>
+    </div>
+    <div class="tab-panel attTab" id="attTab-student" style="display:none;">
+      <div class="card">
+        <div class="filter-bar"><select class="filter-select"><option>Select Student</option></select><button class="btn btn-secondary btn-sm">Apply</button></div>
+        <div style="padding:2rem;text-align:center;color:var(--muted);font-family:'DM Mono',monospace;font-size:.82rem;">Select a student to view their full attendance history</div>
+      </div>
+    </div>
+    <div class="tab-panel attTab" id="attTab-date" style="display:none;">
+      <div class="card">
+        <div class="filter-bar"><input type="date" class="filter-select"><input type="date" class="filter-select"><button class="btn btn-secondary btn-sm">Apply Date Range</button></div>
+        <div style="padding:2rem;text-align:center;color:var(--muted);font-family:'DM Mono',monospace;font-size:.82rem;">Select date range to view records</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ REPORTS — Module 5 · US9, US14 ══ -->
+  <div id="view-admin-reports" class="view" style="display:none;">
+    <div class="topbar"><div><div class="page-title">Reports & Export</div><div class="page-sub">Module 5 · US9, US14 · Generate and export attendance reports</div></div></div>
+    <div class="grid-2-eq" style="margin-bottom:1.5rem;">
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Generate Report</div><div class="card-sub">US14 · Filter and generate</div></div></div>
+        <div style="padding:1.5rem;">
+          <div class="field"><label>Report Type</label><select><option>Overall Attendance by Class</option><option>Student Attendance Summary</option><option>Below 80% Report</option><option>Daily Attendance Log</option><option>Incomplete Scans Report</option></select></div>
+          <div class="form-row">
+            <div class="field"><label>From Date</label><input type="date" value="2025-04-01"></div>
+            <div class="field"><label>To Date</label><input type="date" value="2025-05-02"></div>
+          </div>
+          <div class="field"><label>Class</label><select><option>All Classes</option><option>CS301 — Software Engineering</option><option>CS201 — Data Structures</option><option>CS401 — Network Security</option></select></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="generateReport()">Generate Report</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Export Data</div><div class="card-sub">US9 · Download records</div></div></div>
+        <div style="padding:1.5rem;display:flex;flex-direction:column;gap:.75rem;">
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem;display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:.85rem;font-weight:600;">Export as CSV</div><div style="font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;">All records · RFID & Finger columns</div></div>
+            <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Download</button>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem;display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:.85rem;font-weight:600;">Print View</div><div style="font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;">Formatted for printing</div></div>
+            <button class="btn btn-secondary btn-sm" onclick="showToast('Opening print view...','info')">🖨 Print</button>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem;display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:.85rem;font-weight:600;">Below 80% List</div><div style="font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;">At-risk students only</div></div>
+            <button class="btn btn-danger btn-sm" onclick="showToast('Exporting at-risk list...','info')">⬇ Export</button>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem;display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:.85rem;font-weight:600;">Incomplete Scans</div><div style="font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;">Only 1 of 2 verifications done</div></div>
+            <button class="btn btn-secondary btn-sm" onclick="showToast('Exporting incomplete list...','info')">⬇ Export</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="reportPreview" style="display:none;animation-delay:.3s">
+      <div class="card-header"><div><div class="card-title">Report Preview</div><div class="card-sub">Generated — ready to export</div></div><button class="btn btn-primary btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Student</th><th>ID</th><th>Class</th><th>Attended</th><th>Total</th><th>Rate</th><th>Status</th></tr></thead><tbody id="reportTable"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ══ LECTURER DASHBOARD ══ -->
+  <div id="view-lecturer-dashboard" class="view" style="display:none;">
+    <div class="topbar">
+      <div><div class="page-title">Lecturer Dashboard</div><div class="page-sub">Module 4 · US8 · Class attendance reports · Dual verification</div></div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary" onclick="openModal('manualOverrideModal')">✏️ Manual Override (Enh.3)</button>
+        <div class="badge badge-clock" id="clock3">--:--:--</div>
+      </div>
+    </div>
+    <div class="stat-grid stat-grid-3">
+      <div class="stat-card"><div class="stat-label">My Classes <span>📚</span></div><div class="stat-num">3</div><div class="stat-change">Active this semester</div></div>
+      <div class="stat-card"><div class="stat-label">Fully Verified Today <span>✅</span></div><div class="stat-num c-green">89</div><div class="stat-change">RFID + Finger both done</div></div>
+      <div class="stat-card"><div class="stat-label">At-Risk Students <span>⚠️</span></div><div class="stat-num c-red">8</div><div class="stat-change">Below 80%</div></div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="card mb">
+          <div class="card-header"><div><div class="card-title">Class Attendance Report</div><div class="card-sub">US8 · RFID + Fingerprint verification status</div></div></div>
+          <div class="filter-bar">
+            <select class="filter-select"><option>CS301 — Software Engineering</option><option>CS201 — Data Structures</option><option>CS401 — Network Security</option></select>
+            <input type="date" class="filter-select" value="2025-05-02">
+            <button class="btn btn-secondary btn-sm" onclick="showToast('Report loaded','info')">Apply</button>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Student</th><th>💳 RFID</th><th>👆 Finger</th><th>Time</th><th>Status</th><th>Override</th></tr></thead><tbody id="lecturerTable"></tbody></table></div>
+        </div>
+      </div>
+      <div>
+        <div class="card mb">
+          <div class="card-header"><div><div class="card-title">Attendance Chart</div><div class="card-sub">Enhancement 2 · CS301 this week</div></div></div>
+          <div class="chart-bar-wrap" id="lecturerChart" style="height:140px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">At-Risk Students</div><div class="card-sub">Below 80% attendance</div></div><button class="btn btn-secondary btn-sm" onclick="showToast('Sending email alerts...','info')">📧 Notify All (Enh.1)</button></div>
+          <div id="atRiskList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+</div><!-- /appLayout -->
+
+<!-- ══════════════════════════════════════
+     MODALS
+══════════════════════════════════════ -->
+<!-- Add Student Modal — Module 2 · US10, US11 -->
+<div class="modal-overlay" id="addStudentModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Register New Student <span class="badge badge-module" style="margin-left:8px;">US10 US11</span></div><button class="modal-close" onclick="closeModal('addStudentModal')">✕</button></div>
+    <div class="form-row"><div class="field"><label>Full Name</label><input type="text" placeholder="e.g. Ahmad Rizal bin Abdullah"></div><div class="field"><label>Student ID</label><input type="text" placeholder="e.g. 2021001234"></div></div>
+    <div class="form-row"><div class="field"><label>Email</label><input type="email" placeholder="student@university.edu.my"></div><div class="field"><label>Programme</label><input type="text" placeholder="e.g. Bachelor of CS"></div></div>
+    <div class="field"><label>Assign Class</label><select><option>CS301 — Software Engineering</option><option>CS201 — Data Structures</option><option>CS401 — Network Security</option></select></div>
+    <div style="background:var(--surface2);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:.72rem;color:var(--accent);font-family:'DM Mono',monospace;margin-bottom:.75rem;text-transform:uppercase;letter-spacing:1px;">Hardware Registration — Both Required (US11)</div>
+      <div class="form-row">
+        <div class="field"><label>💳 RFID Card UID</label><input type="text" placeholder="e.g. A3F2C1B0"></div>
+        <div class="field"><label>👆 Fingerprint Sensor ID</label><input type="number" placeholder="1–127"></div>
+      </div>
+      <div style="font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;">Both RFID and Fingerprint must be registered for dual verification to work.</div>
+    </div>
+    <div class="field"><label>Password</label><input type="password" placeholder="Set initial password"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('addStudentModal')">Cancel</button><button class="btn btn-primary" onclick="addStudent()">Register Student</button></div>
+  </div>
+</div>
+
+<!-- Add Class Modal — Module 6 · US15 -->
+<div class="modal-overlay" id="addClassModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add New Class <span class="badge badge-module" style="margin-left:8px;">US15</span></div><button class="modal-close" onclick="closeModal('addClassModal')">✕</button></div>
+    <div class="form-row"><div class="field"><label>Class Code</label><input type="text" placeholder="e.g. CS501"></div><div class="field"><label>Class Name</label><input type="text" placeholder="e.g. Machine Learning"></div></div>
+    <div class="field"><label>Assigned Lecturer</label><select><option>Dr. Amirul Hakim</option><option>Prof. Siti Rahimah</option><option>Dr. Faizal Ahmad</option></select></div>
+    <div class="form-row"><div class="field"><label>Venue / Room</label><input type="text" placeholder="e.g. Lab B, Block 3"></div><div class="field"><label>Schedule</label><input type="text" placeholder="e.g. Mon/Wed 08:00–10:00 AM"></div></div>
+    <div class="field"><label>Max Students</label><input type="number" placeholder="30"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('addClassModal')">Cancel</button><button class="btn btn-primary" onclick="addClass()">Add Class</button></div>
+  </div>
+</div>
+
+<!-- Manual Override Modal — Enhancement 3 -->
+<div class="modal-overlay" id="manualOverrideModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Manual Attendance Override <span class="badge badge-warn" style="margin-left:8px;">Enhancement 3</span></div><button class="modal-close" onclick="closeModal('manualOverrideModal')">✕</button></div>
+    <div class="alert alert-info">Use this when the hardware scanner fails or a student completed only one scan due to sensor error.</div>
+    <div class="field"><label>Select Student</label><select><option>Ahmad Rizal (2021001234)</option><option>Nurul Ain (2021001235)</option><option>Hafiz Zulkarnain (2021001236)</option></select></div>
+    <div class="form-row"><div class="field"><label>Class</label><select><option>CS301 — Software Engineering</option><option>CS201 — Data Structures</option></select></div><div class="field"><label>Date</label><input type="date" value="2025-05-02"></div></div>
+    <!-- Override which verification -->
+    <div style="background:var(--surface2);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:.75rem;text-transform:uppercase;letter-spacing:1px;">Override Verification</div>
+      <div class="form-row">
+        <div class="field"><label>RFID Status</label><select><option>✓ Verified</option><option>✕ Not Verified</option></select></div>
+        <div class="field"><label>Fingerprint Status</label><select><option>✓ Verified</option><option>✕ Not Verified</option></select></div>
+      </div>
+    </div>
+    <div class="field"><label>Mark As</label><select><option value="present">Present</option><option value="absent">Absent</option></select></div>
+    <div class="field"><label>Reason / Notes</label><textarea placeholder="e.g. RFID scanner was offline. Student fingerprint verified but RFID could not be read. Student was physically present."></textarea></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('manualOverrideModal')">Cancel</button><button class="btn btn-primary" onclick="saveOverride()">Save Override</button></div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal — Module 3 · US6 -->
+<div class="modal-overlay" id="forgotModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Forgot Password <span class="badge badge-module" style="margin-left:8px;">US6</span></div><button class="modal-close" onclick="closeModal('forgotModal')">✕</button></div>
+    <div class="alert alert-info">Enter your student ID or email. A reset link will be sent to your registered email.</div>
+    <div class="field"><label>Student ID or Email</label><input type="text" placeholder="e.g. 2021001234 or student@university.edu.my"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('forgotModal')">Cancel</button><button class="btn btn-primary" onclick="sendReset()">Send Reset Link</button></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════ -->
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const USERS = {
+  student:  { username:'2021001234', password:'password123', role:'student',  name:'Ahmad Rizal',      initials:'AR' },
+  lecturer: { username:'lecturer01', password:'password123', role:'lecturer', name:'Dr. Amirul Hakim', initials:'AH' },
+  admin:    { username:'admin',      password:'admin123',    role:'admin',    name:'Administrator',    initials:'AD' },
+};
+const DEMO_CREDS = { student:'2021001234', lecturer:'lecturer01', admin:'admin' };
+
+let currentRole = 'student';
+let currentUser = null;
+
+const STUDENTS = [
+  {name:'Ahmad Rizal',        id:'2021001234', cls:'CS301', attended:18, total:20, rfid:'A3F2C1B0', finger:1,  last:'Today 08:52'},
+  {name:'Nurul Ain Binti Aziz',id:'2021001235',cls:'CS201', attended:17, total:19, rfid:'B2E1D0C1', finger:2,  last:'Today 10:15'},
+  {name:'Hafiz Zulkarnain',   id:'2021001236', cls:'CS401', attended:13, total:18, rfid:'C1F0E2D3', finger:3,  last:'Mon 14:00'},
+  {name:'Siti Nabilah',       id:'2021001237', cls:'CS301', attended:19, total:20, rfid:'D0A1B2C3', finger:4,  last:'Today 08:55'},
+  {name:'Muhammad Faris',     id:'2021001238', cls:'CS201', attended:12, total:19, rfid:'E3C2B1A0', finger:5,  last:'Fri 10:10'},
+  {name:'Amirah Husna',       id:'2021001239', cls:'CS401', attended:15, total:18, rfid:'F2D1C0B3', finger:6,  last:'Today 14:05'},
+  {name:'Danial Hakim',       id:'2021001240', cls:'CS301', attended:16, total:20, rfid:'A1B0C3D2', finger:7,  last:'Today 08:58'},
+  {name:'Nur Izzatul',        id:'2021001241', cls:'CS201', attended:10, total:19, rfid:'B3C1D0A2', finger:8,  last:'Wed 10:20'},
+  {name:'Rizwan Azmi',        id:'2021001242', cls:'CS102', attended:14, total:16, rfid:'C0D2E1F3', finger:9,  last:'Today 09:00'},
+  {name:'Fatin Liyana',       id:'2021001243', cls:'CS102', attended:9,  total:16, rfid:'D1E0F2A3', finger:10, last:'Thu 09:05'},
+];
+
+const CLASSES = [
+  {code:'CS301', name:'Software Engineering',         lecturer:'Dr. Amirul Hakim', venue:'Lab B, Block 3', schedule:'Mon/Wed 08:00–10:00 AM', enrolled:30},
+  {code:'CS201', name:'Data Structures & Algorithms', lecturer:'Prof. Siti Rahimah',venue:'Room 204',      schedule:'Tue/Thu 10:00–12:00 PM', enrolled:25},
+  {code:'CS401', name:'Network Security',             lecturer:'Dr. Faizal Ahmad',  venue:'Lab A',         schedule:'Mon/Wed 02:00–04:00 PM', enrolled:30},
+  {code:'CS102', name:'Object-Oriented Programming',  lecturer:'Mr. Rizwan Said',   venue:'Room 105',      schedule:'Fri 09:00–11:00 AM',     enrolled:28},
+];
+
+// Live scans now include rfid + finger booleans
+const LIVE_SCANS = [
+  {name:'Ahmad Rizal',   cls:'CS301', rfid:true,  finger:true,  time:'08:52'},
+  {name:'Siti Nabilah',  cls:'CS301', rfid:true,  finger:true,  time:'08:55'},
+  {name:'Danial Hakim',  cls:'CS301', rfid:true,  finger:false, time:'08:58'},
+  {name:'Nurul Ain',     cls:'CS201', rfid:true,  finger:true,  time:'10:15'},
+  {name:'Amirah Husna',  cls:'CS401', rfid:true,  finger:true,  time:'14:05'},
+];
+
+// ── UTILITY ───────────────────────────────────────────────────
+function pct(a,t){return Math.round((a/t)*100);}
+function pctCls(p){return p>=80?'good':p>=70?'warn':'bad';}
+function initials(n){return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+
+// Dual verification method tag
+// rfid: bool, finger: bool, present: bool
+function mTag(rfid, finger, present) {
+  if (!present && !rfid && !finger) return `<span class="method-tag m-abs">Absent</span>`;
+
+  const rfidTag   = rfid
+    ? `<span class="method-tag m-rfid">💳 RFID</span>`
+    : `<span class="method-tag m-pending">💳 Pending</span>`;
+  const fingerTag = finger
+    ? `<span class="method-tag m-fp">👆 Finger</span>`
+    : `<span class="method-tag m-pending">👆 Pending</span>`;
+
+  return `<div class="dual-verify">${rfidTag}${fingerTag}</div>`;
+}
+
+// Status badge based on dual verify
+function statusBadge(rfid, finger, present) {
+  if (rfid && finger && present) return `<span class="badge badge-success">✓ Present</span>`;
+  if ((rfid || finger) && !present) return `<span class="badge badge-warn">⚠️ Incomplete</span>`;
+  return `<span class="badge badge-danger">✕ Absent</span>`;
+}
+
+function showToast(msg, type='success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  const icons = {success:'✓', error:'✕', info:'ℹ', warn:'⚠️'};
+  t.innerHTML = `<span>${icons[type]||'ℹ'}</span>${msg}`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function switchTab(rowId, panelId, panelClass, btn){
+  document.querySelectorAll(`#${rowId} .tab`).forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll(`.${panelClass}`).forEach(p=>{p.style.display='none';p.classList.remove('active');});
+  btn.classList.add('active');
+  const panel = document.getElementById(panelId);
+  if(panel){panel.style.display='block';panel.classList.add('active');}
+}
+
+// ── CLOCK ─────────────────────────────────────────────────────
+function updateClocks(){
+  const t = new Date().toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  ['clock1','clock2','clock3'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=t;});
+}
+setInterval(updateClocks, 1000);
+updateClocks();
+
+// ── AUTH ──────────────────────────────────────────────────────
+function setRole(role, btn){
+  currentRole = role;
+  document.querySelectorAll('#roleToggle .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('demoUser').textContent = DEMO_CREDS[role];
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginError').style.display = 'none';
+}
+
+function fillDemo(f){
+  const u = USERS[currentRole];
+  if(f==='user') document.getElementById('loginUser').value = u.username;
+  if(f==='pass') document.getElementById('loginPass').value = u.password;
+}
+
+function handleLogin(){
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const btn  = document.getElementById('loginBtn');
+  const err  = document.getElementById('loginError');
+
+  if(!user || !pass){
+    err.style.display = 'flex';
+    err.textContent = 'Please fill in all fields.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  err.style.display = 'none';
+
+  // Real PHP fetch — connects to /attendx/api/login.php
+  fetch('/attendx/api/login.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: user, password: pass, role: currentRole })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.status === 'success'){
+      currentUser = {
+        name:     data.name,
+        role:     data.role,
+        username: user,
+        initials: data.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
+      };
+      document.getElementById('page-login').classList.remove('active');
+      document.getElementById('appLayout').style.display = 'flex';
+      buildSidebar(data.role);
+      if(data.role === 'student')     navigate('student-dashboard');
+      else if(data.role === 'admin')  navigate('admin-dashboard');
+      else                            navigate('lecturer-dashboard');
+    } else {
+      err.style.display = 'flex';
+      err.textContent = data.message || 'Invalid credentials. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  })
+  .catch(() => {
+    // Fallback to demo login if PHP server not running
+    const u = USERS[currentRole];
+    if(user === u.username && pass === u.password){
+      currentUser = u;
+      document.getElementById('page-login').classList.remove('active');
+      document.getElementById('appLayout').style.display = 'flex';
+      buildSidebar(u.role);
+      if(u.role === 'student')     navigate('student-dashboard');
+      else if(u.role === 'admin')  navigate('admin-dashboard');
+      else                         navigate('lecturer-dashboard');
+      showToast('Demo mode — PHP server not detected','warn');
+    } else {
+      err.style.display = 'flex';
+      err.textContent = 'Cannot reach server. Check XAMPP is running, or use demo credentials.';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  });
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && document.getElementById('page-login').classList.contains('active')) handleLogin();
+});
+
+function logout(){
+  document.getElementById('appLayout').style.display = 'none';
+  document.getElementById('page-login').classList.add('active');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').textContent = 'Sign In';
+  showToast('Signed out successfully','info');
+}
+
+function showForgotPassword(){ openModal('forgotModal'); }
+function sendReset(){ closeModal('forgotModal'); showToast('Reset link sent to your registered email','success'); }
+
+// ── SIDEBAR ───────────────────────────────────────────────────
+const NAV_CONFIG = {
+  student:[
+    {label:'Student', items:[
+      {icon:'📊', text:'Dashboard',           view:'student-dashboard'},
+      {icon:'📋', text:'My Attendance (US5)', view:'student-dashboard'},
+      {icon:'👤', text:'My Profile',          view:'student-profile'},
+    ]}
+  ],
+  admin:[
+    {label:'Overview', items:[
+      {icon:'📊', text:'Dashboard',      view:'admin-dashboard'},
+      {icon:'📡', text:'Live Monitor',   view:'admin-dashboard'},
+    ]},
+    {label:'Management', items:[
+      {icon:'👥', text:'Students (M2)',   view:'admin-students'},
+      {icon:'📚', text:'Classes (M6)',    view:'admin-classes'},
+      {icon:'📋', text:'Attendance (M4)', view:'admin-attendance'},
+    ]},
+    {label:'Reports', items:[
+      {icon:'📈', text:'Reports & Export (M5)', view:'admin-reports'},
+    ]},
+  ],
+  lecturer:[
+    {label:'Lecturer', items:[
+      {icon:'📊', text:'Dashboard (US8)', view:'lecturer-dashboard'},
+      {icon:'📋', text:'Class Records',   view:'lecturer-dashboard'},
+    ]},
+  ],
+};
+
+function buildSidebar(role){
+  const nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  (NAV_CONFIG[role]||[]).forEach(group=>{
+    nav.innerHTML += `<div class="nav-label">${group.label}</div>`;
+    group.items.forEach(item=>{
+      nav.innerHTML += `<a class="nav-item" onclick="navigate('${item.view}',this)"><span class="nav-icon">${item.icon}</span>${item.text}</a>`;
+    });
+  });
+  const avatarCls = role==='admin'?'avatar-admin':role==='lecturer'?'avatar-lecturer':'avatar-student';
+  document.getElementById('sidebarUser').innerHTML = `
+    <div class="user-avatar ${avatarCls}">${currentUser.initials}</div>
+    <div><div class="user-name">${currentUser.name}</div><div class="user-role">${currentUser.username} · ${role}</div></div>`;
+}
+
+function navigate(view, clickedEl){
+  document.querySelectorAll('.view').forEach(v=>v.style.display='none');
+  const el = document.getElementById('view-'+view);
+  if(el) el.style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(clickedEl) clickedEl.classList.add('active');
+  if(view==='student-dashboard') initStudentDashboard();
+  if(view==='admin-dashboard')   initAdminDashboard();
+  if(view==='admin-students')    renderStudentMgmt();
+  if(view==='admin-classes')     renderClassMgmt();
+  if(view==='admin-attendance')  renderAttendanceTable();
+  if(view==='lecturer-dashboard') initLecturerDashboard();
+}
+
+// ── STUDENT DASHBOARD ─────────────────────────────────────────
+function initStudentDashboard(){
+  const h = new Date().getHours();
+  const g = h<12?'morning':h<18?'afternoon':'evening';
+  const name = currentUser ? currentUser.name.split(' ')[0] : 'Student';
+  document.getElementById('greetStudent').textContent = `Good ${g}, ${name} 👋`;
+
+  // Warning banner for below 80%
+  const banner = document.getElementById('studentWarnBanner');
+  if(currentUser?.username === '2021001234'){
+    banner.style.display = 'flex';
+    document.getElementById('studentWarnText').textContent =
+      'Your attendance in CS401 Network Security is below 80%. You may be barred from the final exam.';
+  }
+
+  // Subject rows
+  const subjects = [
+    {code:'CS301', name:'Software Engineering',         lecturer:'Dr. Amirul Hakim', attended:18, total:20},
+    {code:'CS201', name:'Data Structures & Algorithms', lecturer:'Prof. Siti Rahimah',attended:17, total:19},
+    {code:'CS401', name:'Network Security',             lecturer:'Dr. Faizal Ahmad',  attended:13, total:18},
+    {code:'CS102', name:'OOP',                          lecturer:'Mr. Rizwan Said',   attended:13, total:15},
+  ];
+  const rows = document.getElementById('subjectRows');
+  rows.innerHTML = '';
+  subjects.forEach(s=>{
+    const p = pct(s.attended, s.total);
+    const c = pctCls(p);
+    rows.innerHTML += `
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:.68rem;font-family:'DM Mono',monospace;background:var(--surface2);border:1px solid var(--border);padding:3px 8px;border-radius:5px;color:var(--muted);">${s.code}</span>
+            <div><div style="font-size:.88rem;font-weight:600;">${s.name}</div><div style="font-size:.7rem;color:var(--muted);">${s.lecturer}</div></div>
+          </div>
+          <span class="pct pct-${c}">${p}%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill fill-${c}" style="width:${p}%"></div></div>
+        <div style="display:flex;gap:12px;margin-top:6px;">
+          <span style="font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;">✅ ${s.attended} attended</span>
+          <span style="font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;">❌ ${s.total-s.attended} missed</span>
+          <span style="font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;">of ${s.total}</span>
+        </div>
+      </div>`;
+  });
+
+  // Recent scans — now with rfid + finger booleans
+  const scans = [
+    {sub:'CS301', rfid:true,  finger:true,  date:'Today, 08:52 AM',    present:true},
+    {sub:'CS201', rfid:true,  finger:true,  date:'Yesterday, 10:15 AM', present:true},
+    {sub:'CS401', rfid:false, finger:false, date:'Mon, 02:00 PM',       present:false},
+    {sub:'CS102', rfid:true,  finger:true,  date:'Mon, 09:00 AM',       present:true},
+    {sub:'CS301', rfid:true,  finger:false, date:'Fri, 08:55 AM',       present:false},
+  ];
+  const sl = document.getElementById('studentRecentScans');
+  sl.innerHTML = '';
+  scans.forEach(s=>{
+    const dotColor = (s.rfid && s.finger) ? 'var(--accent)' : (s.rfid || s.finger) ? 'var(--warn)' : 'var(--danger)';
+    sl.innerHTML += `
+      <div class="live-item">
+        <div class="status-dot" style="background:${dotColor}"></div>
+        <div class="live-info">
+          <div class="live-name">${s.sub}</div>
+          <div class="live-meta">${s.date}</div>
+        </div>
+        ${mTag(s.rfid, s.finger, s.present)}
+        ${statusBadge(s.rfid, s.finger, s.present)}
+      </div>`;
+  });
+
+  buildCalendar('studentCal');
+  buildChart('studentChart',[
+    {label:'CS301', val:90, type:'good'},
+    {label:'CS201', val:89, type:'good'},
+    {label:'CS401', val:72, type:'warn'},
+    {label:'CS102', val:87, type:'good'},
+  ]);
+}
+
+function buildCalendar(id){
+  const g = document.getElementById(id);
+  if(!g || g.children.length > 0) return;
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{g.innerHTML+=`<div class="cal-day-label">${d}</div>`;});
+  const presentDays    = [1,2,5,6,7,8,9,12,13,14,15,16,19,20,21,22,26,27,28,29];
+  const absentDays     = [23,30];
+  const incompleteDays = [3,10,17]; // only one scan done
+  for(let i=0;i<4;i++) g.innerHTML+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=31;d++){
+    let cls = presentDays.includes(d) ? 'present' : absentDays.includes(d) ? 'absent' : incompleteDays.includes(d) ? 'incomplete' : '';
+    if(d===2) cls += ' today';
+    g.innerHTML+=`<div class="cal-day ${cls}">${d}</div>`;
+  }
+}
+
+function buildChart(id, data){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = data.map(d=>{
+    const h = Math.round((d.val/100)*100);
+    return `<div class="chart-bar-col">
+      <div class="chart-val">${d.val}%</div>
+      <div class="chart-bar ${d.type}" style="height:${h}%"></div>
+      <div class="chart-label">${d.label}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── ADMIN DASHBOARD ───────────────────────────────────────────
+function initAdminDashboard(){
+  renderAdminStudentTable(STUDENTS.slice(0,5));
+  renderLiveFeed('adminLiveFeed', LIVE_SCANS);
+
+  // Notifications (Enhancement 1)
+  const atRisk = STUDENTS.filter(s=>pct(s.attended,s.total)<80);
+  const nl = document.getElementById('notifList');
+  if(nl) nl.innerHTML = atRisk.slice(0,3).map(s=>`
+    <div class="notif-item">
+      <div class="notif-icon" style="background:rgba(255,77,109,.1);">📧</div>
+      <div style="flex:1"><div style="font-size:.82rem;font-weight:600;">${s.name}</div>
+      <div style="font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;">Absent alert sent · ${s.id}</div></div>
+      <span class="badge badge-danger" style="font-size:.6rem;">Sent</span>
+    </div>`).join('');
+
+  buildChart('adminChart',[
+    {label:'CS301', val:88, type:'good'},
+    {label:'CS201', val:76, type:'warn'},
+    {label:'CS401', val:65, type:'bad'},
+    {label:'CS102', val:84, type:'good'},
+  ]);
+
+  // Live counter sim
+  let count = 61, incomplete = 7;
+  const extraNames = ['Muhammad Faris','Nur Izzatul','Rizwan Azmi','Fatin Liyana'];
+  let liveIdx = 0;
+  setInterval(()=>{
+    const name   = extraNames[liveIdx % extraNames.length];
+    const hasFinger = Math.random() > 0.3;
+    const now    = new Date();
+    const t      = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    LIVE_SCANS.push({name, cls:'CS301', rfid:true, finger:hasFinger, time:t});
+    renderLiveFeed('adminLiveFeed', LIVE_SCANS.slice(-6));
+    if(hasFinger){ count++; const el=document.getElementById('adminCheckins'); if(el) el.textContent=count; }
+    else { incomplete++; const el=document.getElementById('adminIncomplete'); if(el) el.textContent=incomplete; }
+    liveIdx++;
+  }, 9000);
+}
+
+function renderLiveFeed(id, scans){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = [...scans].reverse().slice(0,6).map(s=>`
+    <div class="live-item">
+      <div class="status-dot" style="background:${s.rfid&&s.finger?'var(--accent)':s.rfid||s.finger?'var(--warn)':'var(--danger)'}"></div>
+      <div class="live-info"><div class="live-name">${s.name}</div><div class="live-meta">${s.cls}</div></div>
+      ${mTag(s.rfid, s.finger, s.rfid&&s.finger)}
+      <div class="live-time">${s.time}</div>
+    </div>`).join('');
+}
+
+function renderAdminStudentTable(data){
+  const tbody = document.getElementById('adminStudentTable');
+  if(!tbody) return;
+  tbody.innerHTML = data.map(s=>{
+    const p = pct(s.attended, s.total);
+    const c = pctCls(p);
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:10px;">
+        <div class="user-avatar avatar-student" style="width:30px;height:30px;font-size:.65rem;">${initials(s.name)}</div>
+        <div><div style="font-weight:600;font-size:.85rem;">${s.name}</div><div style="font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;">${s.id}</div></div>
+      </div></td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:.78rem;">${s.cls}</span></td>
+      <td><span class="badge badge-success" style="font-size:.6rem;">💳 ✓</span></td>
+      <td><span class="badge badge-success" style="font-size:.6rem;">👆 ✓</span></td>
+      <td><span class="pct pct-${c}">${p}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterAdminStudents(){
+  const q = (document.getElementById('adminSearch')?.value||'').toLowerCase();
+  const f = document.getElementById('adminFilter')?.value||'all';
+  const filtered = STUDENTS.filter(s=>(f==='all'||s.cls===f)&&(s.name.toLowerCase().includes(q)||s.id.includes(q)));
+  renderAdminStudentTable(filtered.slice(0,5));
+}
+
+// ── STUDENT MANAGEMENT — Module 2 ─────────────────────────────
+function renderStudentMgmt(){
+  const q  = (document.getElementById('stuSearch')?.value||'').toLowerCase();
+  const cf = document.getElementById('stuClassFilter')?.value||'all';
+  const sf = document.getElementById('stuStatusFilter')?.value||'all';
+  const data = STUDENTS.filter(s=>{
+    const p = pct(s.attended, s.total);
+    return (cf==='all'||s.cls===cf) &&
+           (sf==='all'||(sf==='good'&&p>=80)||(sf==='bad'&&p<80)) &&
+           (s.name.toLowerCase().includes(q)||s.id.includes(q));
+  });
+  const tbody = document.getElementById('stuMgmtTable');
+  if(!tbody) return;
+  tbody.innerHTML = data.map(s=>{
+    const p = pct(s.attended, s.total);
+    const c = pctCls(p);
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:10px;">
+        <div class="user-avatar avatar-student" style="width:30px;height:30px;font-size:.65rem;">${initials(s.name)}</div>
+        <div><div style="font-weight:600;font-size:.85rem;">${s.name}</div><div style="font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;">${s.id}</div></div>
+      </div></td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:.78rem;">${s.cls}</span></td>
+      <td><span class="badge badge-success" style="font-size:.65rem;">💳 ${s.rfid}</span></td>
+      <td><span class="badge badge-info" style="font-size:.65rem;">👆 ID:${s.finger}</span></td>
+      <td><span class="pct pct-${c}">${p}%</span></td>
+      <td><span class="badge ${p>=80?'badge-success':'badge-danger'}">${p>=80?'OK':'At Risk'}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-ghost btn-sm" onclick="showToast('Opening student record...','info')">View</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModal('addStudentModal')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="showToast('Student deleted','error')">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function addStudent(){ closeModal('addStudentModal'); showToast('Student registered — RFID & Fingerprint saved (US10, US11)','success'); }
+
+// ── CLASS MANAGEMENT — Module 6 ───────────────────────────────
+function renderClassMgmt(){
+  const list = document.getElementById('classMgmtList');
+  if(!list) return;
+  list.innerHTML = CLASSES.map(c=>`
+    <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">
+      <div style="width:4px;height:44px;border-radius:2px;background:var(--accent);flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="font-size:.88rem;font-weight:600;">${c.code} · ${c.name}</div>
+        <div style="font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">${c.lecturer} · ${c.venue} · ${c.schedule}</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="openModal('addClassModal')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="showToast('Class deleted (US15)','error')">Delete</button>
+      </div>
+    </div>`).join('');
+
+  const cs  = document.getElementById('enrollClassSelect');
+  const sts = document.getElementById('enrollStudentSelect');
+  if(cs)  cs.innerHTML  = '<option value="">-- Choose Class --</option>'  + CLASSES.map(c=>`<option value="${c.code}">${c.code} — ${c.name}</option>`).join('');
+  if(sts) sts.innerHTML = '<option value="">-- Choose Student --</option>' + STUDENTS.map(s=>`<option value="${s.id}">${s.name} (${s.id})</option>`).join('');
+}
+
+function enrollStudent(){
+  const cs = document.getElementById('enrollClassSelect')?.value;
+  const ss = document.getElementById('enrollStudentSelect')?.value;
+  if(!cs||!ss){ showToast('Please select both a class and a student','error'); return; }
+  const el = document.getElementById('enrolledList');
+  if(el) el.innerHTML = `<div class="alert alert-success" style="margin-top:.75rem;">✓ Student linked to ${cs} successfully (US15)</div>`;
+  showToast(`Student enrolled in ${cs}`,'success');
+}
+
+function addClass(){ closeModal('addClassModal'); showToast('Class added successfully (US15)','success'); }
+
+// ── ATTENDANCE TABLE — Module 4 ───────────────────────────────
+function renderAttendanceTable(){
+  const tbody = document.getElementById('attendanceTable');
+  if(!tbody) return;
+  const records = [
+    {name:'Ahmad Rizal',      id:'2021001234', cls:'CS301', rfid:true,  finger:true,  time:'08:52 AM'},
+    {name:'Siti Nabilah',     id:'2021001237', cls:'CS301', rfid:true,  finger:true,  time:'08:55 AM'},
+    {name:'Danial Hakim',     id:'2021001240', cls:'CS301', rfid:true,  finger:false, time:'08:58 AM'},
+    {name:'Muhammad Faris',   id:'2021001238', cls:'CS301', rfid:false, finger:false, time:'—'},
+    {name:'Nurul Ain',        id:'2021001235', cls:'CS201', rfid:true,  finger:true,  time:'10:15 AM'},
+    {name:'Nur Izzatul',      id:'2021001241', cls:'CS201', rfid:true,  finger:true,  time:'10:18 AM'},
+    {name:'Amirah Husna',     id:'2021001239', cls:'CS401', rfid:true,  finger:true,  time:'02:05 PM'},
+    {name:'Hafiz Zulkarnain', id:'2021001236', cls:'CS401', rfid:false, finger:false, time:'—'},
+  ];
+  tbody.innerHTML = records.map(r=>{
+    const present = r.rfid && r.finger;
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px;">
+        <div class="user-avatar avatar-student" style="width:28px;height:28px;font-size:.6rem;">${initials(r.name)}</div>
+        <span style="font-size:.85rem;font-weight:600;">${r.name}</span>
+      </div></td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted);">${r.id}</span></td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:.78rem;">${r.cls}</span></td>
+      <td>${r.rfid ? '<span class="badge badge-success" style="font-size:.65rem;">💳 ✓</span>' : '<span class="badge badge-danger" style="font-size:.65rem;">💳 ✕</span>'}</td>
+      <td>${r.finger ? '<span class="badge badge-success" style="font-size:.65rem;">👆 ✓</span>' : '<span class="badge badge-danger" style="font-size:.65rem;">👆 ✕</span>'}</td>
+      <td><span style="font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;">${r.time}</span></td>
+      <td>${statusBadge(r.rfid, r.finger, present)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openModal('manualOverrideModal')">✏️ Override</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── REPORTS — Module 5 ────────────────────────────────────────
+function generateReport(){
+  const preview = document.getElementById('reportPreview');
+  const tbody   = document.getElementById('reportTable');
+  if(!preview||!tbody) return;
+  preview.style.display = 'block';
+  tbody.innerHTML = STUDENTS.map(s=>{
+    const p = pct(s.attended, s.total);
+    const c = pctCls(p);
+    return `<tr>
+      <td style="font-weight:600;">${s.name}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:.78rem;">${s.id}</td>
+      <td>${s.cls}</td>
+      <td>${s.attended}</td>
+      <td>${s.total}</td>
+      <td><span class="pct pct-${c}">${p}%</span></td>
+      <td><span class="badge ${p>=80?'badge-success':'badge-danger'}">${p>=80?'Pass':'At Risk'}</span></td>
+    </tr>`;
+  }).join('');
+  showToast('Report generated (US14)','success');
+  preview.scrollIntoView({behavior:'smooth'});
+}
+
+function exportCSV(){
+  const rows = [
+    ['Name','Student ID','Class','RFID UID','Finger ID','Attended','Total','Rate','Status'],
+    ...STUDENTS.map(s=>{
+      const p = pct(s.attended, s.total);
+      return [s.name, s.id, s.cls, s.rfid, s.finger, s.attended, s.total, p+'%', p>=80?'Pass':'At Risk'];
+    })
+  ];
+  const csv  = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'attendance_report.csv';
+  a.click();
+  showToast('CSV exported successfully (US9)','success');
+}
+
+// ── LECTURER DASHBOARD ────────────────────────────────────────
+function initLecturerDashboard(){
+  const tbody = document.getElementById('lecturerTable');
+  if(!tbody) return;
+
+  const data = [
+    {name:'Ahmad Rizal',   rfid:true,  finger:true,  time:'08:52 AM'},
+    {name:'Siti Nabilah',  rfid:true,  finger:true,  time:'08:55 AM'},
+    {name:'Danial Hakim',  rfid:true,  finger:false, time:'08:58 AM'},
+    {name:'Muhammad Faris',rfid:false, finger:false, time:'—'},
+    {name:'Nur Izzatul',   rfid:false, finger:false, time:'—'},
+  ];
+
+  tbody.innerHTML = data.map(s=>{
+    const present = s.rfid && s.finger;
+    return `<tr>
+      <td style="font-weight:600;">${s.name}</td>
+      <td>${s.rfid ? '<span class="badge badge-success" style="font-size:.65rem;">💳 ✓</span>' : '<span class="badge badge-danger" style="font-size:.65rem;">💳 ✕</span>'}</td>
+      <td>${s.finger ? '<span class="badge badge-success" style="font-size:.65rem;">👆 ✓</span>' : '<span class="badge badge-danger" style="font-size:.65rem;">👆 ✕</span>'}</td>
+      <td><span style="font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;">${s.time}</span></td>
+      <td>${statusBadge(s.rfid, s.finger, present)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openModal('manualOverrideModal')">✏️ Override</button></td>
+    </tr>`;
+  }).join('');
+
+  // At-risk list
+  const atRisk = STUDENTS.filter(s=>pct(s.attended,s.total)<80);
+  const el = document.getElementById('atRiskList');
+  if(el) el.innerHTML = atRisk.map(s=>{
+    const p = pct(s.attended, s.total);
+    return `<div class="live-item">
+      <div class="status-dot" style="background:var(--danger)"></div>
+      <div class="live-info"><div class="live-name">${s.name}</div><div class="live-meta">${s.cls} · ${s.id}</div></div>
+      <span class="pct pct-bad">${p}%</span>
+    </div>`;
+  }).join('');
+
+  buildChart('lecturerChart',[
+    {label:'Mon', val:90, type:'good'},
+    {label:'Tue', val:85, type:'good'},
+    {label:'Wed', val:78, type:'warn'},
+    {label:'Thu', val:92, type:'good'},
+    {label:'Fri', val:70, type:'warn'},
+  ]);
+}
+
+function saveOverride(){ closeModal('manualOverrideModal'); showToast('Attendance override saved — both verifications updated (Enhancement 3)','success'); }
+</script>
+</body>
+</html>

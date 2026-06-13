@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AttendX — New Pages</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── SAME DESIGN TOKENS AS MAIN FILE ── */
+:root {
+  --bg:#0a0e1a; --surface:#111827; --surface2:#1a2235; --surface3:#222f45;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+  --accent:#00e5a0; --accent2:#0066ff; --accent3:#7c3aed;
+  --text:#f0f4ff; --muted:#8896b3; --muted2:#5a6a85;
+  --danger:#ff4d6d; --warn:#ffb340; --info:#38bdf8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Syne',sans-serif;color:var(--text);min-height:100vh;}
+button{cursor:pointer;}
+input,select,textarea{font-family:'Syne',sans-serif;}
+
+.grid-bg::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.orb{position:fixed;border-radius:50%;filter:blur(130px);pointer-events:none;z-index:0;}
+.orb-1{width:600px;height:600px;background:rgba(0,229,160,0.06);top:-200px;left:-100px;}
+.orb-2{width:500px;height:500px;background:rgba(0,102,255,0.05);bottom:-200px;right:-100px;}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes scanPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,229,160,0.4)}50%{box-shadow:0 0 0 16px rgba(0,229,160,0)}}
+@keyframes scanLine{0%{top:0}100%{top:calc(100% - 2px)}}
+@keyframes fingerPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:0.7}}
+@keyframes checkPop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* ── PAGE ROUTER ── */
+.p{display:none;min-height:100vh;position:relative;z-index:1;}
+.p.show{display:flex;}
+
+/* ── NAV BAR ── */
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);position:fixed;top:0;left:0;right:0;background:rgba(10,14,26,0.9);backdrop-filter:blur(12px);z-index:100;}
+.logo{display:flex;align-items:center;gap:8px;font-size:1rem;font-weight:800;letter-spacing:-.5px;}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s ease infinite;}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:.5rem 1rem;border-radius:8px;cursor:pointer;transition:all .2s;}
+.nav-back:hover{color:var(--accent);border-color:rgba(0,229,160,.3);}
+
+/* ── PAGE WRAPPER ── */
+.page-wrap{width:100%;padding-top:80px;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;}
+.page-wrap.center{align-items:center;padding-top:0;}
+.form-container{width:100%;max-width:580px;padding:2rem;}
+.form-container.wide{max-width:760px;}
+
+/* ── HEADINGS ── */
+.form-heading{margin-bottom:2rem;animation:fadeUp .5s ease;}
+.form-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.15);color:var(--accent);font-size:.65rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:4px 12px;border-radius:4px;margin-bottom:1rem;font-family:'DM Mono',monospace;}
+.form-tag::before{content:'';width:5px;height:5px;background:var(--accent);border-radius:50%;animation:pulse 1.5s ease infinite;}
+.form-title{font-size:1.8rem;font-weight:800;letter-spacing:-1px;margin-bottom:6px;}
+.form-sub{font-size:.82rem;color:var(--muted);font-family:'DM Mono',monospace;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;animation:fadeUp .5s ease both;}
+.card-header{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);}
+.card-title{font-size:.9rem;font-weight:700;}
+.card-sub{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+.card-body{padding:1.5rem;}
+
+/* ── FORM ELEMENTS ── */
+.field{margin-bottom:1rem;}
+.field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:6px;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;}
+.field input,.field select,.field textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;font-size:.88rem;color:var(--text);font-family:'Syne',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,.1);}
+.field input::placeholder{color:var(--muted);font-size:.82rem;}
+.field select option{background:var(--surface);}
+.field textarea{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.input-icon-wrap{position:relative;}
+.input-icon-wrap input{padding-left:2.6rem;}
+.input-icon{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);font-size:.9rem;pointer-events:none;}
+.field-hint{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:4px;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#0a0e1a;padding:.75rem 1.4rem;font-size:.88rem;}
+.btn-primary:hover{background:#00ffb3;transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,229,160,.25);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:.7rem 1.2rem;font-size:.82rem;}
+.btn-secondary:hover{border-color:var(--border2);background:var(--surface3);}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted);padding:.6rem 1rem;font-size:.78rem;}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-full{width:100%;justify-content:center;padding:.9rem;}
+
+/* ── ALERTS ── */
+.alert{border-radius:10px;padding:.85rem 1.25rem;display:flex;align-items:flex-start;gap:10px;margin-bottom:1rem;font-size:.82rem;}
+.alert-success{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);color:var(--accent);}
+.alert-danger{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.2);color:var(--danger);}
+.alert-info{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);color:var(--info);}
+.alert-warn{background:rgba(255,179,64,.08);border:1px solid rgba(255,179,64,.2);color:var(--warn);}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:.65rem;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:20px;}
+.badge-success{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.2);color:var(--accent);}
+.badge-danger{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);color:var(--danger);}
+.badge-info{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:var(--info);}
+.badge-warn{background:rgba(255,179,64,.1);border:1px solid rgba(255,179,64,.2);color:var(--warn);}
+
+/* ── STEP INDICATOR ── */
+.steps{display:flex;align-items:center;gap:0;margin-bottom:2rem;}
+.step{display:flex;align-items:center;gap:8px;flex:1;}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;font-family:'DM Mono',monospace;flex-shrink:0;transition:all .3s;}
+.step-num.active{background:var(--accent);color:#0a0e1a;}
+.step-num.done{background:rgba(0,229,160,.2);color:var(--accent);border:1px solid rgba(0,229,160,.3);}
+.step-num.pending{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+.step-label{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--muted);}
+.step-label.active{color:var(--text);}
+.step-line{flex:1;height:1px;background:var(--border);margin:0 8px;}
+.step-line.done{background:rgba(0,229,160,.3);}
+
+/* ── SECTION DIVIDER ── */
+.section-divider{display:flex;align-items:center;gap:10px;margin:1.25rem 0;}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.section-divider span{font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;}
+
+/* ── RFID SCAN BOX ── */
+.rfid-scan-area{background:var(--surface2);border:2px dashed rgba(0,102,255,.3);border-radius:16px;padding:2.5rem;text-align:center;position:relative;overflow:hidden;transition:all .3s;}
+.rfid-scan-area.scanning{border-color:var(--accent);border-style:solid;background:rgba(0,229,160,.03);}
+.rfid-scan-area.success{border-color:var(--accent);background:rgba(0,229,160,.06);}
+.rfid-scan-area.error{border-color:var(--danger);background:rgba(255,77,109,.06);}
+.scan-line-anim{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanLine 2s linear infinite;display:none;}
+.rfid-scan-area.scanning .scan-line-anim{display:block;}
+.rfid-icon{font-size:3rem;margin-bottom:.75rem;display:block;}
+.rfid-uid-display{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.75rem 1.25rem;font-family:'DM Mono',monospace;font-size:1rem;font-weight:600;color:var(--accent);letter-spacing:2px;margin-top:1rem;display:none;}
+.rfid-uid-display.show{display:block;}
+
+/* ── FINGERPRINT BOX ── */
+.finger-scan-area{background:var(--surface2);border:2px dashed rgba(0,229,160,.3);border-radius:16px;padding:2.5rem;text-align:center;transition:all .3s;}
+.finger-scan-area.scanning{border-color:var(--accent);border-style:solid;}
+.finger-scan-area.success{border-color:var(--accent);background:rgba(0,229,160,.06);}
+.finger-scan-area.error{border-color:var(--danger);background:rgba(255,77,109,.06);}
+.finger-icon{font-size:3.5rem;display:block;margin-bottom:.75rem;transition:all .3s;}
+.finger-icon.scanning{animation:fingerPulse 1s ease infinite;}
+.finger-progress{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-top:1rem;}
+.finger-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#00ffb3);border-radius:3px;width:0%;transition:width .3s ease;}
+
+/* ── SUCCESS STATE ── */
+.success-check{width:64px;height:64px;border-radius:50%;background:rgba(0,229,160,.15);border:2px solid rgba(0,229,160,.3);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 1rem;animation:checkPop .4s ease;}
+.success-card{text-align:center;padding:2rem;}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:.85rem 1.25rem;font-size:.82rem;display:flex;align-items:center;gap:10px;min-width:280px;animation:slideIn .3s ease;box-shadow:0 10px 40px rgba(0,0,0,.5);}
+.toast-success{border-left:3px solid var(--accent);}
+.toast-error{border-left:3px solid var(--danger);}
+.toast-info{border-left:3px solid var(--info);}
+
+/* ── PAGE NAV DEMO ── */
+.demo-nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;z-index:200;background:rgba(10,14,26,.9);border:1px solid var(--border);border-radius:12px;padding:.75rem 1rem;}
+.demo-btn{font-size:.68rem;font-family:'DM Mono',monospace;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .2s;}
+.demo-btn:hover,.demo-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(0,229,160,.08);}
+
+@media(max-width:600px){
+  .form-row{grid-template-columns:1fr;}
+  .form-container{padding:1.25rem;}
+}
+</style>
+</head>
+<body class="grid-bg">
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="logo"><div class="logo-dot"></div>AttendX</div>
+  <button class="nav-back" onclick="goBack()">← Back to Login</button>
+</nav>
+
+<!-- ══════════════════════════════════════
+     PAGE 1: STUDENT REGISTRATION
+     Tasks #84, #85, #86
+══════════════════════════════════════ -->
+<div class="p show" id="page-student-register">
+  <div class="page-wrap">
+    <div class="form-container wide">
+      <div class="form-heading">
+        <div class="form-tag">Student Registration · #84</div>
+        <div class="form-title">Register New Student</div>
+        <div class="form-sub">Fill in all fields. RFID and Fingerprint must be registered separately after account creation.</div>
+      </div>
+
+      <!-- Step indicator -->
+      <div class="steps" id="stuSteps">
+        <div class="step">
+          <div class="step-num active" id="stuStep1Num">1</div>
+          <div class="step-label active" id="stuStep1Label">Personal Info</div>
+        </div>
+        <div class="step-line" id="stuLine1"></div>
+        <div class="step">
+          <div class="step-num pending" id="stuStep2Num">2</div>
+          <div class="step-label" id="stuStep2Label">Account Setup</div>
+        </div>
+        <div class="step-line" id="stuLine2"></div>
+        <div class="step">
+          <div class="step-num pending" id="stuStep3Num">3</div>
+          <div class="step-label" id="stuStep3Label">Confirmation</div>
+        </div>
+      </div>
+
+      <!-- Step 1: Personal Info (#85) -->
+      <div id="stuPanel1">
+        <div class="card" style="animation-delay:0s">
+          <div class="card-header">
+            <div class="card-title">Personal Information</div>
+            <div class="card-sub">Task #85 · Name, Student ID, Class, Email</div>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="field">
+                <label>Full Name</label>
+                <input type="text" id="stuName" placeholder="e.g. Ahmad Rizal bin Abdullah">
+              </div>
+              <div class="field">
+                <label>Student ID</label>
+                <input type="text" id="stuId" placeholder="e.g. 2021001234">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>Email Address</label>
+                <input type="email" id="stuEmail" placeholder="student@university.edu.my">
+              </div>
+              <div class="field">
+                <label>Phone Number</label>
+                <input type="tel" id="stuPhone" placeholder="e.g. 0123456789">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>Programme</label>
+                <input type="text" id="stuProg" placeholder="e.g. Bachelor of Computer Science">
+              </div>
+              <div class="field">
+                <label>Year of Study</label>
+                <select id="stuYear">
+                  <option value="">-- Select Year --</option>
+                  <option value="1">Year 1</option>
+                  <option value="2">Year 2</option>
+                  <option value="3">Year 3</option>
+                  <option value="4">Year 4</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Assign to Class</label>
+              <select id="stuClass">
+                <option value="">-- Select Class --</option>
+                <option value="CS301">CS301 — Software Engineering</option>
+                <option value="CS201">CS201 — Data Structures & Algorithms</option>
+                <option value="CS401">CS401 — Network Security</option>
+                <option value="CS102">CS102 — Object-Oriented Programming</option>
+              </select>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:.5rem;">
+              <button class="btn btn-primary" onclick="stuNextStep(2)">Next: Account Setup →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Account Setup -->
+      <div id="stuPanel2" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Account Setup</div>
+            <div class="card-sub">Set login credentials for this student</div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label>Username (auto-filled from Student ID)</label>
+              <input type="text" id="stuUsername" placeholder="Auto-filled from Student ID" readonly style="opacity:.7;">
+              <div class="field-hint">Student will use their Student ID to login</div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>Password</label>
+                <input type="password" id="stuPass" placeholder="Set initial password">
+              </div>
+              <div class="field">
+                <label>Confirm Password</label>
+                <input type="password" id="stuPassConfirm" placeholder="Confirm password">
+              </div>
+            </div>
+            <div class="alert alert-info">
+              ℹ️ After registration, the student must register their RFID card and fingerprint separately before they can mark attendance.
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:.5rem;">
+              <button class="btn btn-secondary" onclick="stuNextStep(1)">← Back</button>
+              <button class="btn btn-primary" onclick="submitStudentReg()">Register Student ✓</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Success (#86 - saved to DB) -->
+      <div id="stuPanel3" style="display:none;">
+        <div class="card">
+          <div class="success-card">
+            <div class="success-check">✓</div>
+            <div style="font-size:1.2rem;font-weight:700;margin-bottom:.5rem;">Student Registered Successfully</div>
+            <div style="font-size:.82rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.5rem;">Task #86 · Data saved to MySQL database</div>
+            <div id="stuSuccessSummary" style="background:var(--surface2);border-radius:10px;padding:1rem;text-align:left;margin-bottom:1.5rem;font-size:.82rem;display:flex;flex-direction:column;gap:.5rem;"></div>
+            <div class="alert alert-warn" style="text-align:left;">
+              ⚠️ Next steps: Register this student's RFID card and Fingerprint to enable dual verification attendance.
+            </div>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+              <button class="btn btn-primary" onclick="showPage('page-rfid-register')">Register RFID Card →</button>
+              <button class="btn btn-secondary" onclick="showPage('page-student-register');resetStudentForm()">Register Another Student</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 2: LECTURER REGISTRATION
+     Tasks #88, #89, #90
+══════════════════════════════════════ -->
+<div class="p" id="page-lecturer-register">
+  <div class="page-wrap">
+    <div class="form-container wide">
+      <div class="form-heading">
+        <div class="form-tag">Lecturer Registration · #88</div>
+        <div class="form-title">Register New Lecturer</div>
+        <div class="form-sub">Create a lecturer account with subject and staff details.</div>
+      </div>
+
+      <!-- Step indicator -->
+      <div class="steps">
+        <div class="step">
+          <div class="step-num active" id="lecStep1Num">1</div>
+          <div class="step-label active">Staff Details</div>
+        </div>
+        <div class="step-line" id="lecLine1"></div>
+        <div class="step">
+          <div class="step-num pending" id="lecStep2Num">2</div>
+          <div class="step-label" id="lecStep2Label">Account Setup</div>
+        </div>
+        <div class="step-line" id="lecLine2"></div>
+        <div class="step">
+          <div class="step-num pending" id="lecStep3Num">3</div>
+          <div class="step-label" id="lecStep3Label">Confirmation</div>
+        </div>
+      </div>
+
+      <!-- Panel 1: Staff Details (#89) -->
+      <div id="lecPanel1">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Staff Details</div>
+            <div class="card-sub">Task #89 · Name, Staff ID, Subject, Email</div>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="field">
+                <label>Full Name</label>
+                <input type="text" id="lecName" placeholder="e.g. Dr. Amirul Hakim bin Hassan">
+              </div>
+              <div class="field">
+                <label>Staff ID</label>
+                <input type="text" id="lecStaffId" placeholder="e.g. STAFF001234">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>Email Address</label>
+                <input type="email" id="lecEmail" placeholder="lecturer@university.edu.my">
+              </div>
+              <div class="field">
+                <label>Phone Number</label>
+                <input type="tel" id="lecPhone" placeholder="e.g. 0123456789">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>Department / Faculty</label>
+                <input type="text" id="lecDept" placeholder="e.g. Faculty of Computer Science">
+              </div>
+              <div class="field">
+                <label>Designation</label>
+                <select id="lecTitle">
+                  <option value="">-- Select --</option>
+                  <option>Lecturer</option>
+                  <option>Senior Lecturer</option>
+                  <option>Associate Professor</option>
+                  <option>Professor</option>
+                  <option>Tutor</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Assigned Subject(s)</label>
+              <select id="lecSubject" multiple style="height:100px;">
+                <option value="CS301">CS301 — Software Engineering</option>
+                <option value="CS201">CS201 — Data Structures & Algorithms</option>
+                <option value="CS401">CS401 — Network Security</option>
+                <option value="CS102">CS102 — Object-Oriented Programming</option>
+              </select>
+              <div class="field-hint">Hold Ctrl / Cmd to select multiple subjects</div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:.5rem;">
+              <button class="btn btn-primary" onclick="lecNextStep(2)">Next: Account Setup →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 2: Account -->
+      <div id="lecPanel2" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Account Setup</div>
+            <div class="card-sub">Set login credentials for this lecturer</div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label>Username</label>
+              <input type="text" id="lecUsername" placeholder="e.g. lecturer01">
+              <div class="field-hint">Lecturer will use this username to login</div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>Password</label>
+                <input type="password" id="lecPass" placeholder="Set initial password">
+              </div>
+              <div class="field">
+                <label>Confirm Password</label>
+                <input type="password" id="lecPassConfirm" placeholder="Confirm password">
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:.5rem;">
+              <button class="btn btn-secondary" onclick="lecNextStep(1)">← Back</button>
+              <button class="btn btn-primary" onclick="submitLecturerReg()">Register Lecturer ✓</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 3: Success (#90) -->
+      <div id="lecPanel3" style="display:none;">
+        <div class="card">
+          <div class="success-card">
+            <div class="success-check">✓</div>
+            <div style="font-size:1.2rem;font-weight:700;margin-bottom:.5rem;">Lecturer Registered Successfully</div>
+            <div style="font-size:.82rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.5rem;">Task #90 · Lecturer data saved to database</div>
+            <div id="lecSuccessSummary" style="background:var(--surface2);border-radius:10px;padding:1rem;text-align:left;margin-bottom:1.5rem;font-size:.82rem;display:flex;flex-direction:column;gap:.5rem;"></div>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+              <button class="btn btn-primary" onclick="showPage('page-lecturer-register');resetLecturerForm()">Register Another Lecturer</button>
+              <button class="btn btn-secondary" onclick="goBack()">Back to Dashboard</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 3: RFID REGISTRATION
+     Tasks #92, #94
+══════════════════════════════════════ -->
+<div class="p" id="page-rfid-register">
+  <div class="page-wrap">
+    <div class="form-container">
+      <div class="form-heading">
+        <div class="form-tag">RFID Registration · #92</div>
+        <div class="form-title">Register RFID Card</div>
+        <div class="form-sub">Link a physical RFID card to a student account.</div>
+      </div>
+
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <div class="card-title">Select Student</div>
+          <div class="card-sub">Choose which student to assign this card to</div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label>Student</label>
+            <select id="rfidStudentSelect">
+              <option value="">-- Select Student --</option>
+              <option value="2021001234">Ahmad Rizal (2021001234)</option>
+              <option value="2021001235">Nurul Ain (2021001235)</option>
+              <option value="2021001236">Hafiz Zulkarnain (2021001236)</option>
+              <option value="2021001237">Siti Nabilah (2021001237)</option>
+              <option value="2021001238">Muhammad Faris (2021001238)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Scan RFID Card</div>
+          <div class="card-sub">Task #92 · Place card on the reader</div>
+        </div>
+        <div class="card-body">
+
+          <!-- RFID scan area -->
+          <div class="rfid-scan-area" id="rfidScanBox">
+            <div class="scan-line-anim"></div>
+            <span class="rfid-icon">💳</span>
+            <div style="font-size:.9rem;font-weight:600;margin-bottom:4px;" id="rfidScanText">Ready to scan</div>
+            <div style="font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;" id="rfidScanSub">Place your RFID card on the reader at the door</div>
+            <div class="rfid-uid-display" id="rfidUidDisplay">-- -- -- --</div>
+          </div>
+
+          <!-- Manual entry fallback -->
+          <div class="section-divider"><span>or enter manually</span></div>
+
+          <div class="field">
+            <label>RFID Card UID (Manual Entry)</label>
+            <input type="text" id="rfidManualUid" placeholder="e.g. A3F2C1B0" style="text-transform:uppercase;font-family:'DM Mono',monospace;letter-spacing:2px;">
+            <div class="field-hint">Find the UID printed on the back of the card, or read it using Serial Monitor from Arduino IDE</div>
+          </div>
+
+          <div id="rfidResult" style="display:none;"></div>
+
+          <div style="display:flex;gap:10px;margin-top:.5rem;flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="simulateScan()" style="flex:1;">📡 Simulate Scan (Demo)</button>
+            <button class="btn btn-primary" onclick="saveRfid()" style="flex:1;">Save RFID Card ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation #94 -->
+      <div class="card" id="rfidConfirmCard" style="display:none;margin-top:1.5rem;animation:fadeUp .4s ease;">
+        <div class="success-card">
+          <div class="success-check">💳</div>
+          <div style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem;">RFID Card Registered Successfully</div>
+          <div style="font-size:.78rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1rem;">Task #94 · Successful RFID registration confirmed</div>
+          <div id="rfidConfirmDetails" style="background:var(--surface2);border-radius:8px;padding:.85rem 1rem;text-align:left;margin-bottom:1rem;font-size:.82rem;display:flex;flex-direction:column;gap:.4rem;"></div>
+          <div class="alert alert-warn" style="text-align:left;">
+            ⚠️ Remember to also register the student's fingerprint to enable dual verification.
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+            <button class="btn btn-primary" onclick="showPage('page-finger-register')">Register Fingerprint →</button>
+            <button class="btn btn-secondary" onclick="resetRfidForm()">Register Another Card</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 4: FINGERPRINT ENROLLMENT
+     Task #97
+══════════════════════════════════════ -->
+<div class="p" id="page-finger-register">
+  <div class="page-wrap">
+    <div class="form-container">
+      <div class="form-heading">
+        <div class="form-tag">Fingerprint Enrollment · #97</div>
+        <div class="form-title">Enroll Fingerprint</div>
+        <div class="form-sub">Register a student's fingerprint into the AS608 sensor and save the ID to the database.</div>
+      </div>
+
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <div class="card-title">Select Student</div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label>Student</label>
+            <select id="fingerStudentSelect">
+              <option value="">-- Select Student --</option>
+              <option value="2021001234">Ahmad Rizal (2021001234)</option>
+              <option value="2021001235">Nurul Ain (2021001235)</option>
+              <option value="2021001236">Hafiz Zulkarnain (2021001236)</option>
+              <option value="2021001237">Siti Nabilah (2021001237)</option>
+              <option value="2021001238">Muhammad Faris (2021001238)</option>
+            </select>
+          </div>
+          <div class="form-row" style="margin-top:.5rem;">
+            <div class="field">
+              <label>Sensor Slot ID (1–127)</label>
+              <input type="number" id="fingerSlotId" min="1" max="127" placeholder="e.g. 1">
+              <div class="field-hint">Unique ID stored in AS608 sensor memory</div>
+            </div>
+            <div class="field">
+              <label>Finger</label>
+              <select id="fingerWhich">
+                <option value="right_index">Right Index Finger</option>
+                <option value="right_thumb">Right Thumb</option>
+                <option value="left_index">Left Index Finger</option>
+                <option value="left_thumb">Left Thumb</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Enrollment Process</div>
+          <div class="card-sub">Task #97 · Two scans required for accurate enrollment</div>
+        </div>
+        <div class="card-body">
+
+          <!-- Step indicators for enrollment -->
+          <div class="steps" style="margin-bottom:1.5rem;">
+            <div class="step">
+              <div class="step-num active" id="fStep1">1</div>
+              <div class="step-label active">First Scan</div>
+            </div>
+            <div class="step-line" id="fLine1"></div>
+            <div class="step">
+              <div class="step-num pending" id="fStep2">2</div>
+              <div class="step-label" id="fLabel2">Remove Finger</div>
+            </div>
+            <div class="step-line" id="fLine2"></div>
+            <div class="step">
+              <div class="step-num pending" id="fStep3">3</div>
+              <div class="step-label" id="fLabel3">Second Scan</div>
+            </div>
+            <div class="step-line" id="fLine3"></div>
+            <div class="step">
+              <div class="step-num pending" id="fStep4">✓</div>
+              <div class="step-label" id="fLabel4">Saved</div>
+            </div>
+          </div>
+
+          <!-- Fingerprint scan box -->
+          <div class="finger-scan-area" id="fingerScanBox">
+            <span class="finger-icon" id="fingerIcon">👆</span>
+            <div style="font-size:.9rem;font-weight:600;margin-bottom:4px;" id="fingerScanText">Ready to enroll</div>
+            <div style="font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;" id="fingerScanSub">Press Start Enrollment then place finger on the sensor</div>
+            <div class="finger-progress" id="fingerProgressBar" style="display:none;">
+              <div class="finger-progress-fill" id="fingerProgressFill"></div>
+            </div>
+          </div>
+
+          <div id="fingerResult" style="margin-top:1rem;display:none;"></div>
+
+          <div style="display:flex;gap:10px;margin-top:1rem;flex-wrap:wrap;">
+            <button class="btn btn-secondary" id="fingerStartBtn" onclick="startEnrollment()" style="flex:1;">▶ Start Enrollment</button>
+            <button class="btn btn-primary" id="fingerSaveBtn" onclick="saveFingerprint()" style="flex:1;display:none;">Save Fingerprint ID ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success after enrollment -->
+      <div class="card" id="fingerSuccessCard" style="display:none;margin-top:1.5rem;animation:fadeUp .4s ease;">
+        <div class="success-card">
+          <div class="success-check">👆</div>
+          <div style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem;">Fingerprint Enrolled Successfully</div>
+          <div style="font-size:.78rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1rem;">Task #97 · Fingerprint ID saved to database</div>
+          <div id="fingerConfirmDetails" style="background:var(--surface2);border-radius:8px;padding:.85rem 1rem;text-align:left;margin-bottom:1rem;font-size:.82rem;display:flex;flex-direction:column;gap:.4rem;"></div>
+          <div class="alert alert-success" style="text-align:left;">
+            ✓ This student can now use dual verification (RFID + Fingerprint) to mark attendance at the classroom door.
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+            <button class="btn btn-primary" onclick="showPage('page-student-register');resetStudentForm()">Register New Student</button>
+            <button class="btn btn-secondary" onclick="resetFingerForm()">Enroll Another Finger</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 5: FORGOT PASSWORD
+     Tasks #70, #71, #100
+══════════════════════════════════════ -->
+<div class="p" id="page-forgot-password">
+  <div class="page-wrap center" style="padding-top:80px;">
+    <div class="form-container">
+
+      <!-- Panel A: Enter email -->
+      <div id="forgotPanel1">
+        <div class="form-heading" style="text-align:center;">
+          <div class="form-tag" style="margin:0 auto 1rem;">Forgot Password · #70</div>
+          <div class="form-title">Reset Password</div>
+          <div class="form-sub">Enter your Student ID or email address. A reset link will be sent to your registered email.</div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <!-- Role selection -->
+            <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+              <button class="btn btn-secondary" id="forgotRoleStudent" onclick="setForgotRole('student',this)" style="flex:1;justify-content:center;border-color:var(--accent);color:var(--accent);">🎓 Student</button>
+              <button class="btn btn-secondary" id="forgotRoleLecturer" onclick="setForgotRole('lecturer',this)" style="flex:1;justify-content:center;">👨‍🏫 Lecturer</button>
+            </div>
+            <div class="field">
+              <label id="forgotFieldLabel">Student ID or Email</label>
+              <div class="input-icon-wrap">
+                <span class="input-icon">✉️</span>
+                <input type="text" id="forgotInput" placeholder="e.g. 2021001234 or student@university.edu.my" style="padding-left:2.6rem;">
+              </div>
+            </div>
+            <div id="forgotError" class="alert alert-danger" style="display:none;">Please enter your Student ID or email address.</div>
+            <button class="btn btn-primary btn-full" onclick="sendResetLink()" style="margin-top:.5rem;">Send Reset Link 📧</button>
+            <div style="text-align:center;margin-top:1rem;">
+              <span style="font-size:.78rem;color:var(--muted);font-family:'DM Mono',monospace;">Remember your password? </span>
+              <span style="font-size:.78rem;color:var(--accent);font-family:'DM Mono',monospace;cursor:pointer;" onclick="goBack()">Sign In</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel B: Email sent confirmation (#71, #100) -->
+      <div id="forgotPanel2" style="display:none;">
+        <div class="card">
+          <div class="success-card">
+            <div style="font-size:3rem;margin-bottom:1rem;">📧</div>
+            <div style="font-size:1.2rem;font-weight:700;margin-bottom:.5rem;">Reset Link Sent!</div>
+            <div style="font-size:.82rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.5rem;" id="forgotSentSub">Tasks #71 & #100 · Password reset link sent to your registered email</div>
+            <div class="alert alert-info" style="text-align:left;">
+              ℹ️ Check your email inbox. The reset link expires in <strong>30 minutes</strong>. Check your spam folder if you don't see it.
+            </div>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">
+              <button class="btn btn-secondary" onclick="showForgotPanel(1)">← Resend Link</button>
+              <button class="btn btn-primary" onclick="showPage('page-reset-password')">Enter Reset Code →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 6: RESET PASSWORD
+     Tasks #72, #73, #82
+══════════════════════════════════════ -->
+<div class="p" id="page-reset-password">
+  <div class="page-wrap center" style="padding-top:80px;">
+    <div class="form-container">
+
+      <!-- Panel A: Enter code + new password -->
+      <div id="resetPanel1">
+        <div class="form-heading" style="text-align:center;">
+          <div class="form-tag" style="margin:0 auto 1rem;">Reset Password · #72</div>
+          <div class="form-title">Create New Password</div>
+          <div class="form-sub">Enter the reset code from your email and set a new password.</div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="field">
+              <label>Reset Code (from email)</label>
+              <input type="text" id="resetCode" placeholder="e.g. 483921" maxlength="6" style="font-family:'DM Mono',monospace;letter-spacing:4px;font-size:1.2rem;text-align:center;">
+              <div class="field-hint">6-digit code sent to your registered email</div>
+            </div>
+            <div class="section-divider"><span>new password</span></div>
+            <div class="field">
+              <label>New Password</label>
+              <div class="input-icon-wrap">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="newPass" placeholder="Enter new password" style="padding-left:2.6rem;">
+              </div>
+            </div>
+            <div class="field">
+              <label>Confirm New Password</label>
+              <div class="input-icon-wrap">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="newPassConfirm" placeholder="Confirm new password" style="padding-left:2.6rem;">
+              </div>
+            </div>
+            <!-- Password strength indicator -->
+            <div style="margin-bottom:1rem;">
+              <div style="font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Password Strength</div>
+              <div style="height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;">
+                <div id="passStrengthBar" style="height:100%;width:0%;border-radius:2px;transition:all .3s;background:var(--danger);"></div>
+              </div>
+              <div style="font-size:.68rem;font-family:'DM Mono',monospace;margin-top:4px;" id="passStrengthLabel"></div>
+            </div>
+            <div id="resetError" class="alert alert-danger" style="display:none;"></div>
+            <button class="btn btn-primary btn-full" onclick="submitResetPassword()">Update Password ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel B: Success (#73, #82) -->
+      <div id="resetPanel2" style="display:none;">
+        <div class="card">
+          <div class="success-card">
+            <div class="success-check">🔑</div>
+            <div style="font-size:1.2rem;font-weight:700;margin-bottom:.5rem;">Password Updated Successfully</div>
+            <div style="font-size:.82rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.5rem;">Tasks #73 & #82 · New password saved to database</div>
+            <div class="alert alert-success" style="text-align:left;">
+              ✓ Your password has been updated. You can now sign in with your new password.
+            </div>
+            <div style="margin-top:1.5rem;">
+              <button class="btn btn-primary btn-full" onclick="goBack()">Go to Sign In →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     DEMO NAV
+══════════════════════════════════════ -->
+<div class="demo-nav">
+  <span style="font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;">Pages:</span>
+  <button class="demo-btn active" id="demoBtn1" onclick="showPage('page-student-register');setDemoActive(this)">Student Reg</button>
+  <button class="demo-btn" id="demoBtn2" onclick="showPage('page-lecturer-register');setDemoActive(this)">Lecturer Reg</button>
+  <button class="demo-btn" id="demoBtn3" onclick="showPage('page-rfid-register');setDemoActive(this)">RFID Reg</button>
+  <button class="demo-btn" id="demoBtn4" onclick="showPage('page-finger-register');setDemoActive(this)">Fingerprint</button>
+  <button class="demo-btn" id="demoBtn5" onclick="showPage('page-forgot-password');setDemoActive(this)">Forgot Pass</button>
+  <button class="demo-btn" id="demoBtn6" onclick="showPage('page-reset-password');setDemoActive(this)">Reset Pass</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════ -->
+<script>
+// ── PAGE ROUTER ────────────────────────
+function showPage(id){
+  document.querySelectorAll('.p').forEach(p=>p.classList.remove('show'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('show');
+  window.scrollTo(0,0);
+}
+
+function setDemoActive(btn){
+  document.querySelectorAll('.demo-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function goBack(){
+  showToast('Navigating back to login...','info');
+  // In real project: window.location.href = '/attendx/assets/attendx.html';
+}
+
+// ── TOAST ──────────────────────────────
+function showToast(msg, type='success'){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  const icons = {success:'✓', error:'✕', info:'ℹ', warn:'⚠️'};
+  t.innerHTML = `<span>${icons[type]||'ℹ'}</span>${msg}`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+// ── STUDENT REGISTRATION ───────────────
+function stuNextStep(step){
+  if(step === 2){
+    const name = document.getElementById('stuName').value.trim();
+    const id   = document.getElementById('stuId').value.trim();
+    const email= document.getElementById('stuEmail').value.trim();
+    const cls  = document.getElementById('stuClass').value;
+    if(!name||!id||!email||!cls){ showToast('Please fill in all required fields','error'); return; }
+    // Auto-fill username from student ID
+    document.getElementById('stuUsername').value = id;
+  }
+  document.getElementById('stuPanel1').style.display = step===1?'block':'none';
+  document.getElementById('stuPanel2').style.display = step===2?'block':'none';
+  document.getElementById('stuPanel3').style.display = step===3?'block':'none';
+  // Update step indicators
+  ['stuStep1Num','stuStep2Num','stuStep3Num'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    const s  = i+1;
+    el.className = 'step-num ' + (s<step?'done':s===step?'active':'pending');
+    if(s<step) el.textContent = '✓';
+    else el.textContent = s;
+  });
+  ['stuLine1','stuLine2'].forEach((id,i)=>{
+    document.getElementById(id).className = 'step-line' + (i+1 < step ? ' done' : '');
+  });
+}
+
+function submitStudentReg(){
+  const pass1 = document.getElementById('stuPass').value;
+  const pass2 = document.getElementById('stuPassConfirm').value;
+  if(!pass1){ showToast('Please set a password','error'); return; }
+  if(pass1 !== pass2){ showToast('Passwords do not match','error'); return; }
+
+  const name  = document.getElementById('stuName').value;
+  const id    = document.getElementById('stuId').value;
+  const email = document.getElementById('stuEmail').value;
+  const cls   = document.getElementById('stuClass').value;
+
+  // In real project: fetch('/attendx/api/register_student.php', { method:'POST', ... })
+  showToast('Saving student to database...','info');
+  setTimeout(()=>{
+    stuNextStep(3);
+    document.getElementById('stuSuccessSummary').innerHTML = `
+      <div>👤 <strong>Name:</strong> ${name}</div>
+      <div>🎓 <strong>Student ID:</strong> ${id}</div>
+      <div>✉️ <strong>Email:</strong> ${email}</div>
+      <div>📚 <strong>Class:</strong> ${cls}</div>
+      <div>🔑 <strong>Username:</strong> ${id}</div>`;
+    showToast('Student registered successfully!','success');
+  }, 800);
+}
+
+function resetStudentForm(){
+  ['stuName','stuId','stuEmail','stuPhone','stuProg','stuPass','stuPassConfirm','stuUsername'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.getElementById('stuClass').value = '';
+  document.getElementById('stuYear').value = '';
+  stuNextStep(1);
+}
+
+// ── LECTURER REGISTRATION ──────────────
+function lecNextStep(step){
+  if(step === 2){
+    const name = document.getElementById('lecName').value.trim();
+    const sid  = document.getElementById('lecStaffId').value.trim();
+    const email= document.getElementById('lecEmail').value.trim();
+    if(!name||!sid||!email){ showToast('Please fill in all required fields','error'); return; }
+  }
+  document.getElementById('lecPanel1').style.display = step===1?'block':'none';
+  document.getElementById('lecPanel2').style.display = step===2?'block':'none';
+  document.getElementById('lecPanel3').style.display = step===3?'block':'none';
+  ['lecStep1Num','lecStep2Num','lecStep3Num'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    const s  = i+1;
+    el.className = 'step-num ' + (s<step?'done':s===step?'active':'pending');
+    if(s<step) el.textContent = '✓';
+    else el.textContent = s;
+  });
+  ['lecLine1','lecLine2'].forEach((id,i)=>{
+    document.getElementById(id).className = 'step-line' + (i+1 < step ? ' done' : '');
+  });
+}
+
+function submitLecturerReg(){
+  const pass1 = document.getElementById('lecPass').value;
+  const pass2 = document.getElementById('lecPassConfirm').value;
+  const user  = document.getElementById('lecUsername').value.trim();
+  if(!pass1||!user){ showToast('Please fill in all fields','error'); return; }
+  if(pass1 !== pass2){ showToast('Passwords do not match','error'); return; }
+
+  const name  = document.getElementById('lecName').value;
+  const sid   = document.getElementById('lecStaffId').value;
+  const email = document.getElementById('lecEmail').value;
+
+  showToast('Saving lecturer to database...','info');
+  setTimeout(()=>{
+    lecNextStep(3);
+    document.getElementById('lecSuccessSummary').innerHTML = `
+      <div>👤 <strong>Name:</strong> ${name}</div>
+      <div>🪪 <strong>Staff ID:</strong> ${sid}</div>
+      <div>✉️ <strong>Email:</strong> ${email}</div>
+      <div>🔑 <strong>Username:</strong> ${user}</div>`;
+    showToast('Lecturer registered successfully!','success');
+  }, 800);
+}
+
+function resetLecturerForm(){
+  ['lecName','lecStaffId','lecEmail','lecPhone','lecDept','lecUsername','lecPass','lecPassConfirm'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  lecNextStep(1);
+}
+
+// ── RFID REGISTRATION ──────────────────
+let rfidScanState = 'idle';
+
+function simulateScan(){
+  const student = document.getElementById('rfidStudentSelect').value;
+  if(!student){ showToast('Please select a student first','error'); return; }
+
+  const box  = document.getElementById('rfidScanBox');
+  const text = document.getElementById('rfidScanText');
+  const sub  = document.getElementById('rfidScanSub');
+  const uid  = document.getElementById('rfidUidDisplay');
+
+  box.className = 'rfid-scan-area scanning';
+  text.textContent = 'Scanning...';
+  sub.textContent  = 'Reading card UID...';
+
+  setTimeout(()=>{
+    const fakeUid = 'A3F2C1B0';
+    document.getElementById('rfidManualUid').value = fakeUid;
+    uid.textContent = fakeUid;
+    uid.classList.add('show');
+    box.className = 'rfid-scan-area success';
+    text.textContent = 'Card Detected!';
+    sub.textContent  = `UID: ${fakeUid}`;
+    rfidScanState = 'scanned';
+    showToast(`Card UID: ${fakeUid} detected`,'success');
+  }, 1800);
+}
+
+function saveRfid(){
+  const student = document.getElementById('rfidStudentSelect').value;
+  const uid     = document.getElementById('rfidManualUid').value.trim().toUpperCase();
+  if(!student){ showToast('Please select a student','error'); return; }
+  if(!uid){ showToast('Please scan a card or enter UID manually','error'); return; }
+
+  showToast('Saving RFID to database...','info');
+  setTimeout(()=>{
+    const confirmCard    = document.getElementById('rfidConfirmCard');
+    const confirmDetails = document.getElementById('rfidConfirmDetails');
+    const studentText    = document.getElementById('rfidStudentSelect').options[document.getElementById('rfidStudentSelect').selectedIndex].text;
+
+    confirmCard.style.display = 'block';
+    confirmDetails.innerHTML = `
+      <div>👤 <strong>Student:</strong> ${studentText}</div>
+      <div>💳 <strong>RFID UID:</strong> ${uid}</div>
+      <div>⏰ <strong>Registered:</strong> ${new Date().toLocaleString('en-MY')}</div>`;
+    showToast('RFID registered successfully! (#94)','success');
+    window.scrollTo(0, document.body.scrollHeight);
+  }, 800);
+}
+
+function resetRfidForm(){
+  document.getElementById('rfidStudentSelect').value = '';
+  document.getElementById('rfidManualUid').value = '';
+  document.getElementById('rfidScanBox').className = 'rfid-scan-area';
+  document.getElementById('rfidScanText').textContent = 'Ready to scan';
+  document.getElementById('rfidScanSub').textContent = 'Place your RFID card on the reader at the door';
+  document.getElementById('rfidUidDisplay').classList.remove('show');
+  document.getElementById('rfidConfirmCard').style.display = 'none';
+  rfidScanState = 'idle';
+}
+
+// ── FINGERPRINT ENROLLMENT ─────────────
+let enrollStep = 0;
+let enrollInterval = null;
+
+function startEnrollment(){
+  const student = document.getElementById('fingerStudentSelect').value;
+  const slotId  = document.getElementById('fingerSlotId').value;
+  if(!student){ showToast('Please select a student','error'); return; }
+  if(!slotId||slotId<1||slotId>127){ showToast('Please enter a valid slot ID (1–127)','error'); return; }
+
+  enrollStep = 1;
+  updateEnrollUI();
+}
+
+function updateEnrollUI(){
+  const box      = document.getElementById('fingerScanBox');
+  const icon     = document.getElementById('fingerIcon');
+  const text     = document.getElementById('fingerScanText');
+  const sub      = document.getElementById('fingerScanSub');
+  const progress = document.getElementById('fingerProgressBar');
+  const fill     = document.getElementById('fingerProgressFill');
+
+  const steps = ['fStep1','fStep2','fStep3','fStep4'];
+  const lines = ['fLine1','fLine2','fLine3'];
+
+  steps.forEach((id,i)=>{
+    const el = document.getElementById(id);
+    if(i+1 < enrollStep){ el.className='step-num done'; el.textContent='✓'; }
+    else if(i+1 === enrollStep){ el.className='step-num active'; el.textContent=i+1===4?'✓':i+1; }
+    else{ el.className='step-num pending'; el.textContent=i+1===4?'✓':i+1; }
+  });
+  lines.forEach((id,i)=>{
+    document.getElementById(id).className = 'step-line' + (i+1 < enrollStep ? ' done' : '');
+  });
+
+  if(enrollStep === 1){
+    box.className = 'finger-scan-area scanning';
+    icon.className = 'finger-icon scanning';
+    icon.textContent = '👆';
+    text.textContent = 'Place finger on sensor...';
+    sub.textContent  = 'Hold steady for 2 seconds';
+    progress.style.display = 'block';
+    fill.style.width = '0%';
+    let w = 0;
+    enrollInterval = setInterval(()=>{
+      w += 4;
+      fill.style.width = w + '%';
+      if(w >= 100){
+        clearInterval(enrollInterval);
+        enrollStep = 2;
+        setTimeout(updateEnrollUI, 300);
+      }
+    }, 80);
+  }
+  else if(enrollStep === 2){
+    box.className = 'finger-scan-area';
+    icon.className = 'finger-icon';
+    icon.textContent = '✋';
+    text.textContent = 'Remove your finger';
+    sub.textContent  = 'Lift your finger off the sensor';
+    fill.style.width = '100%';
+    setTimeout(()=>{ enrollStep = 3; updateEnrollUI(); }, 2000);
+  }
+  else if(enrollStep === 3){
+    box.className = 'finger-scan-area scanning';
+    icon.className = 'finger-icon scanning';
+    icon.textContent = '👆';
+    text.textContent = 'Place the same finger again...';
+    sub.textContent  = 'Second scan for confirmation';
+    fill.style.width = '0%';
+    let w = 0;
+    enrollInterval = setInterval(()=>{
+      w += 4;
+      fill.style.width = w + '%';
+      if(w >= 100){
+        clearInterval(enrollInterval);
+        enrollStep = 4;
+        setTimeout(updateEnrollUI, 300);
+      }
+    }, 80);
+  }
+  else if(enrollStep === 4){
+    box.className = 'finger-scan-area success';
+    icon.className = 'finger-icon';
+    icon.textContent = '✅';
+    text.textContent = 'Enrollment Complete!';
+    sub.textContent  = 'Both scans matched — fingerprint ready to save';
+    fill.style.width = '100%';
+    document.getElementById('fingerStartBtn').style.display = 'none';
+    document.getElementById('fingerSaveBtn').style.display  = 'flex';
+    showToast('Both scans matched! Click Save to store.','success');
+  }
+}
+
+function saveFingerprint(){
+  const student = document.getElementById('fingerStudentSelect').value;
+  const slotId  = document.getElementById('fingerSlotId').value;
+  const finger  = document.getElementById('fingerWhich').value;
+  const studentText = document.getElementById('fingerStudentSelect').options[document.getElementById('fingerStudentSelect').selectedIndex].text;
+
+  showToast('Saving fingerprint ID to database...','info');
+  setTimeout(()=>{
+    document.getElementById('fingerSuccessCard').style.display = 'block';
+    document.getElementById('fingerConfirmDetails').innerHTML = `
+      <div>👤 <strong>Student:</strong> ${studentText}</div>
+      <div>👆 <strong>Sensor Slot ID:</strong> ${slotId}</div>
+      <div>🖐 <strong>Finger:</strong> ${finger.replace('_',' ')}</div>
+      <div>⏰ <strong>Enrolled:</strong> ${new Date().toLocaleString('en-MY')}</div>`;
+    showToast('Fingerprint ID saved! (#97)','success');
+    window.scrollTo(0, document.body.scrollHeight);
+  }, 800);
+}
+
+function resetFingerForm(){
+  enrollStep = 0;
+  clearInterval(enrollInterval);
+  document.getElementById('fingerStudentSelect').value = '';
+  document.getElementById('fingerSlotId').value = '';
+  document.getElementById('fingerScanBox').className = 'finger-scan-area';
+  document.getElementById('fingerIcon').className = 'finger-icon';
+  document.getElementById('fingerIcon').textContent = '👆';
+  document.getElementById('fingerScanText').textContent = 'Ready to enroll';
+  document.getElementById('fingerScanSub').textContent = 'Press Start Enrollment then place finger on the sensor';
+  document.getElementById('fingerProgressBar').style.display = 'none';
+  document.getElementById('fingerProgressFill').style.width = '0%';
+  document.getElementById('fingerStartBtn').style.display = 'flex';
+  document.getElementById('fingerSaveBtn').style.display = 'none';
+  document.getElementById('fingerSuccessCard').style.display = 'none';
+  ['fStep1','fStep2','fStep3'].forEach((id,i)=>{
+    document.getElementById(id).className = i===0 ? 'step-num active' : 'step-num pending';
+    document.getElementById(id).textContent = i+1;
+  });
+  document.getElementById('fStep4').className = 'step-num pending';
+  document.getElementById('fStep4').textContent = '✓';
+  ['fLine1','fLine2','fLine3'].forEach(id=>document.getElementById(id).className='step-line');
+}
+
+// ── FORGOT PASSWORD ────────────────────
+let forgotRole = 'student';
+
+function setForgotRole(role, btn){
+  forgotRole = role;
+  document.getElementById('forgotRoleStudent').style.borderColor  = role==='student' ? 'var(--accent)' : 'var(--border)';
+  document.getElementById('forgotRoleStudent').style.color        = role==='student' ? 'var(--accent)' : 'var(--muted)';
+  document.getElementById('forgotRoleLecturer').style.borderColor = role==='lecturer'? 'var(--accent)' : 'var(--border)';
+  document.getElementById('forgotRoleLecturer').style.color       = role==='lecturer'? 'var(--accent)' : 'var(--muted)';
+  document.getElementById('forgotFieldLabel').textContent = role==='student' ? 'Student ID or Email' : 'Staff ID or Email';
+  document.getElementById('forgotInput').placeholder = role==='student' ? 'e.g. 2021001234 or student@university.edu.my' : 'e.g. STAFF001234 or lecturer@university.edu.my';
+}
+
+function sendResetLink(){
+  const val = document.getElementById('forgotInput').value.trim();
+  const err = document.getElementById('forgotError');
+  if(!val){ err.style.display='flex'; err.textContent='Please enter your '+( forgotRole==='student'?'Student ID':'Staff ID')+' or email.'; return; }
+  err.style.display = 'none';
+  showToast(`Sending reset link to ${forgotRole}...`,'info');
+  setTimeout(()=>{
+    document.getElementById('forgotSentSub').textContent =
+      forgotRole==='student' ? 'Task #71 · Reset link sent to student email' : 'Task #100 · Reset link sent to lecturer email';
+    showForgotPanel(2);
+    showToast('Reset link sent!','success');
+  }, 1000);
+}
+
+function showForgotPanel(n){
+  document.getElementById('forgotPanel1').style.display = n===1?'block':'none';
+  document.getElementById('forgotPanel2').style.display = n===2?'block':'none';
+}
+
+// ── RESET PASSWORD ─────────────────────
+document.addEventListener('DOMContentLoaded', ()=>{
+  const passInput = document.getElementById('newPass');
+  if(passInput){
+    passInput.addEventListener('input', ()=>{
+      const val = passInput.value;
+      const bar = document.getElementById('passStrengthBar');
+      const lbl = document.getElementById('passStrengthLabel');
+      let strength = 0;
+      if(val.length >= 8) strength++;
+      if(/[A-Z]/.test(val)) strength++;
+      if(/[0-9]/.test(val)) strength++;
+      if(/[^A-Za-z0-9]/.test(val)) strength++;
+      const colors = ['var(--danger)','var(--warn)','var(--warn)','var(--accent)'];
+      const labels = ['Weak','Fair','Good','Strong'];
+      bar.style.width  = (strength * 25) + '%';
+      bar.style.background = colors[strength-1] || 'var(--danger)';
+      lbl.textContent  = strength > 0 ? labels[strength-1] : '';
+      lbl.style.color  = colors[strength-1] || 'var(--muted)';
+    });
+  }
+});
+
+function submitResetPassword(){
+  const code  = document.getElementById('resetCode').value.trim();
+  const pass1 = document.getElementById('newPass').value;
+  const pass2 = document.getElementById('newPassConfirm').value;
+  const err   = document.getElementById('resetError');
+
+  if(!code || code.length < 4){ err.style.display='flex'; err.textContent='Please enter the reset code from your email.'; return; }
+  if(!pass1){ err.style.display='flex'; err.textContent='Please enter a new password.'; return; }
+  if(pass1 !== pass2){ err.style.display='flex'; err.textContent='Passwords do not match.'; return; }
+  if(pass1.length < 8){ err.style.display='flex'; err.textContent='Password must be at least 8 characters.'; return; }
+  err.style.display = 'none';
+
+  showToast('Updating password in database...','info');
+  setTimeout(()=>{
+    document.getElementById('resetPanel1').style.display = 'none';
+    document.getElementById('resetPanel2').style.display = 'block';
+    showToast('Password updated! Tasks #73 & #82 complete','success');
+  }, 1000);
+}
+</script>
+</body>
+</html>
