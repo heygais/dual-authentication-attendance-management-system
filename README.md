@@ -1,4 +1,4 @@
-# dual-authentication-attendance-management-system
+# rfid--attendance--system
 
 AttendX – IoT-Based Attendance Management System
 AttendX is a dual-component attendance system that combines RFID hardware with a web-based dashboard for real-time tracking and management.
